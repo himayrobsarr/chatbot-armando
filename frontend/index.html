@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Digital - Demo</title>
+    <link rel="stylesheet" href="css/estyle.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎙️ Avatar Digital con Voz en Tiempo Real</h1>
+            <p class="subtitle">Habla y observa cómo el avatar responde con lip-sync perfecto</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Video Container -->
+            <div class="video-container">
+                <video id="avatarVideo" autoplay playsinline muted></video>
+                <div class="video-overlay" id="videoOverlay">
+                    <div class="loader"></div>
+                    <p>Inicializando avatar...</p>
+                </div>
+            </div>
+
+            <!-- Status Panel -->
+            <div class="status-panel">
+                <div class="status-item">
+                    <span class="status-label">Estado:</span>
+                    <span class="status-value" id="statusValue">
+                        <span class="status-dot status-idle"></span>
+                        Desconectado
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Latencia:</span>
+                    <span class="status-value" id="latencyValue">--- ms</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn btn-primary" id="initBtn">
+                    <span class="btn-icon">🚀</span>
+                    Iniciar Avatar
+                </button>
+                
+                <button class="btn btn-record" id="recordBtn" disabled>
+                    <span class="btn-icon">🎤</span>
+                    <span id="recordBtnText">Mantén presionado para hablar</span>
+                </button>
+
+                <button class="btn btn-secondary" id="stopBtn" disabled>
+                    <span class="btn-icon">🛑</span>
+                    Detener Sesión
+                </button>
+            </div>
+
+            <!-- Debug Console (Optional) -->
+            <details class="debug-console">
+                <summary>🔍 Consola de Debug</summary>
+                <div class="console-content" id="debugConsole">
+                    <p class="console-msg">Sistema listo. Presiona "Iniciar Avatar"</p>
+                </div>
+            </details>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Powered by <strong>ElevenLabs</strong> + <strong>HeyGen</strong></p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
