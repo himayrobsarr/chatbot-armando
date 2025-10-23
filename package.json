@@ -1,0 +1,42 @@
+{
+  "name": "avatar-line",
+  "version": "1.0.0",
+  "description": "Avatar digital con lip-sync en tiempo real usando ElevenLabs y HeyGen",
+  "main": "server/server.js",
+  "scripts": {
+    "dev": "nodemon server/server.js",
+    "dev:watch": "nodemon --watch server server/server.js",
+    "start": "node server/server.js",
+    "start:prod": "cross-env NODE_ENV=production node server/server.js",
+    "test": "echo \"Tests via curl - ver README.md\"",
+    "setup": "node -e \"const fs=require('fs'); const env='PORT=3000\\nNODE_ENV=development\\nELEVEN_API_KEY=your_key_here\\nELEVEN_VOICE_ID=your_voice_id_here\\nHEYGEN_API_KEY=your_key_here\\n'; fs.writeFileSync('.env', env); console.log('Archivo .env creado. Edítalo con tus claves API reales.');\"",
+    "health": "curl -s http://localhost:3000/health",
+    "install:clean": "rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul & npm install",
+    "postinstall": "echo \"Instalación completada. Ejecuta 'npm run setup' para crear el archivo .env\""
+  },
+  "keywords": [
+    "avatar",
+    "elevenlabs",
+    "heygen",
+    "tts",
+    "lip-sync"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "cross-env": "^7.0.3"
+  }
+}
