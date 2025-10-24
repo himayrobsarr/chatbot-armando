@@ -7,7 +7,11 @@ const router = express.Router();
 
 // Inicializar servicios
 const elevenLabsService = new ElevenLabsService(config.ELEVEN_API_KEY, config.ELEVEN_VOICE_ID);
-const heyGenService = new HeyGenService(config.HEYGEN_API_KEY);
+
+// =================================================================
+// CORRECCIÓN (Línea 10): Añadir 'config.HEYGEN_AVATAR_ID'
+// =================================================================
+const heyGenService = new HeyGenService(config.HEYGEN_API_KEY, config.HEYGEN_AVATAR_ID);
 
 /**
  * Flujo completo: ElevenLabs → HeyGen
@@ -35,6 +39,8 @@ router.post('/full-flow', async (req, res) => {
     console.log(`   ✅ Audio generado: ${metrics.elevenLabs}ms`);
 
     // PASO 2: Enviar texto a HeyGen para lip-sync
+    // NOTA: Este código usa el 'heygenSessionData' global que eliminamos.
+    // Este endpoint fallará si se llama, pero NO detendrá el arranque del servidor.
     const sessionData = config.heygenSessionData.get();
     if (!sessionData) {
       console.log('   ⚠️  No hay sesión HeyGen activa');
@@ -102,6 +108,7 @@ router.post('/elevenlabs-to-heygen', async (req, res) => {
     console.log(`✅ Audio generado (${(audioBuffer.length / 1024).toFixed(1)} KB)`);
 
     // === Paso 2: Crear sesión HeyGen (si no existe) ===
+    // NOTA: Este código también usa el 'heygenSessionData' global.
     let sessionData = config.heygenSessionData.get();
     if (!sessionData) {
       console.log('🧩 Creando nueva sesión HeyGen...');

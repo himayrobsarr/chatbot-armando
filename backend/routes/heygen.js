@@ -1,53 +1,57 @@
+// backend/routes/heygen.js
+
 const express = require('express');
 const HeyGenService = require('../services/HeyGenService');
-const config = require('../config');
+const config = require('../config'); // Lo usamos para las claves
 
-const router = express.Router();
+const router = express.Router(); // <-- ¡Exportamos un router!
 
-// Inicializar servicio HeyGen
-const heyGenService = new HeyGenService(config.HEYGEN_API_KEY);
+// =================================================================
+// TUS CLAVES (HARDCODEADAS)
+// ¡USA TUS CLAVES NUEVAS COMPLETAS AQUÍ!
+// =================================================================
+const MI_HEYGEN_API_KEY = "sk_V2_hgu_knS2fHStXbM_vGSQyQPMtnGON2brKRqyOaEWmp4EvIq2"; 
+const MI_HEYGEN_AVATAR_ID = "Thaddeus_CasualLook_public";
+// =================================================================
+
+// Inicializar servicio HeyGen con las claves
+// Usamos las claves de ARRIBA, no las de 'config'
+const heyGenService = new HeyGenService(MI_HEYGEN_API_KEY, MI_HEYGEN_AVATAR_ID);
 
 /**
  * Crear nueva sesión HeyGen
+ * Esto llama a streaming.new y debe devolver session_id Y sdp.
  */
+// En backend/routes/heygen.js
+// REEMPLAZA router.post('/session') por esto:
+
 router.post('/session', async (req, res) => {
   try {
-    const result = await heyGenService.createSession();
-    config.heygenSessionData.set(result.sessionData);
+      const result = await heyGenService.createSession();
+      const sessionData = result.sessionData.data;
+      
+      // ✅ Verificar realtime_endpoint en vez de sdp
+      if (!sessionData || !sessionData.session_id || !sessionData.realtime_endpoint) {
+          console.error('❌ Respuesta incompleta:', result.sessionData);
+          return res.status(500).json({ 
+              error: 'HeyGen no devolvió session_id o realtime_endpoint' 
+          });
+      }
+      
+      // Devolver datos para WebSocket
+      res.json({
+          sessionId: sessionData.session_id,
+          webrtcData: {
+              realtime_endpoint: sessionData.realtime_endpoint,
+              session_duration_limit: sessionData.session_duration_limit,
+              url: sessionData.url,
+              access_token: sessionData.access_token
+          }
+      });
 
-    res.json({
-      success: true,
-      latency: `${result.latency}ms`,
-      session: result.sessionData
-    });
   } catch (error) {
-    res.status(error.status || 500).json(error);
-  }
-});
-
-/**
- * Iniciar streaming HeyGen
- */
-router.post('/start', async (req, res) => {
-  const sessionData = config.heygenSessionData.get();
-  
-  if (!sessionData) {
-    return res.status(400).json({
-      error: 'No hay sesión activa. Ejecuta POST /api/test/heygen/session primero'
-    });
-  }
-
-  try {
-    const sessionId = sessionData.data.session_id;
-    const result = await heyGenService.startStreaming(sessionId);
-
-    res.json({
-      success: true,
-      latency: `${result.latency}ms`,
-      response: result.response
-    });
-  } catch (error) {
-    res.status(500).json(error);
+      console.error('❌ Error /session:', error.message);
+      res.status(500).json({ error: error.message });
   }
 });
 
@@ -55,52 +59,36 @@ router.post('/start', async (req, res) => {
  * Enviar texto para lip-sync
  */
 router.post('/speak', async (req, res) => {
-  const { text } = req.body;
-  const sessionData = config.heygenSessionData.get();
+    // Leemos ambos del body (esto ya estaba correcto)
+    const { text, sessionId } = req.body; 
 
-  if (!sessionData) {
-    return res.status(400).json({
-      error: 'No hay sesión activa. Ejecuta POST /api/test/heygen/session primero'
-    });
-  }
+    if (!sessionId) {
+        return res.status(400).json({ error: 'sessionId (string) requerido' });
+    }
+    if (!text) {
+        return res.status(400).json({ error: 'Campo "text" requerido' });
+    }
 
-  if (!text) {
-    return res.status(400).json({ error: 'Campo "text" requerido' });
-  }
+    try {
+        const result = await heyGenService.sendText(sessionId, text); // Llama a streaming.talk (o task)
 
-  try {
-    const sessionId = sessionData.data.session_id;
-    const result = await heyGenService.sendText(sessionId, text);
-
-    res.json({
-      success: true,
-      latency: `${result.latency}ms`,
-      response: result.response
-    });
-  } catch (error) {
-    res.status(500).json(error);
-  }
+        res.json({
+            success: true,
+            latency: `${result.latency}ms`,
+            response: result.response
+        });
+    } catch (error) {
+        console.error('❌ Error en /speak:', error.message);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-/**
- * Cerrar sesión HeyGen
- */
-router.post('/close', async (req, res) => {
-  const sessionData = config.heygenSessionData.get();
-  
-  if (!sessionData) {
-    return res.status(400).json({ error: 'No hay sesión activa para cerrar' });
-  }
-
-  try {
-    const sessionId = sessionData.data.session_id;
-    await heyGenService.stopStreaming(sessionId);
-    config.heygenSessionData.clear();
-
-    res.json({ success: true, message: 'Sesión cerrada' });
-  } catch (error) {
-    res.status(500).json(error);
-  }
+// Los endpoints /start y /close ya no son necesarios para este flujo
+router.post('/start', (req, res) => {
+    res.status(404).json({ error: 'Endpoint no usado. La sesión se inicia en /session.' });
+});
+router.post('/close', (req, res) => {
+    res.json({ success: true, message: 'Cierre no implementado en este flujo.' });
 });
 
 module.exports = router;

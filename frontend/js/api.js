@@ -14,7 +14,7 @@ const API = {
         }
     },
 
-    // Crear sesión con HeyGen
+    // Crear sesión con HeyGen (Paso único)
     async createHeyGenSession() {
         try {
             const response = await fetch(`${this.baseURL}/api/test/heygen/session`, {
@@ -28,12 +28,15 @@ const API = {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
+            // Devuelve { sessionId: "...", webrtcData: { sdp: "...", ... } }
             return await response.json();
         } catch (error) {
             console.error('Error creating HeyGen session:', error);
             throw error;
         }
     },
+
+    // La función 'startHeyGenSession' se ha eliminado
 
     // Enviar texto a ElevenLabs para generar audio
     async sendTextToElevenLabs(text) {
@@ -50,7 +53,6 @@ const API = {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // Devolver el audio como blob
             return await response.blob();
         } catch (error) {
             console.error('Error sending text to ElevenLabs:', error);
@@ -58,15 +60,15 @@ const API = {
         }
     },
 
-    // Enviar texto a HeyGen para lip-sync
-    async sendTextToHeyGen(text) {
+    // Enviar texto a HeyGen para lip-sync (Esta función está correcta)
+    async sendTextToHeyGen(text, sessionId) {
         try {
             const response = await fetch(`${this.baseURL}/api/test/heygen/speak`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ text })
+                body: JSON.stringify({ text, sessionId })
             });
             
             if (!response.ok) {

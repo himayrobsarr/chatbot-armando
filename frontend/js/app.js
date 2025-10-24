@@ -2,9 +2,10 @@
 
 class AvatarApp {
     constructor() {
-        this.heygenSession = null;
+        this.sessionId = null;
         this.isRecording = false;
         this.isInitialized = false;
+        this.peerConnection = null; 
         
         // Referencias DOM
         this.elements = {
@@ -76,7 +77,7 @@ class AvatarApp {
         }
     }
 
-    // Inicializar avatar
+    // Inicializar avatar (MODIFICADA)
     async initializeAvatar() {
         this.log('🚀 Iniciando avatar...');
         this.updateStatus('Inicializando...', 'processing');
@@ -88,20 +89,37 @@ class AvatarApp {
             await AudioManager.requestMicrophoneAccess();
             this.log('✅ Micrófono accesible', 'success');
 
-            // 2. Crear sesión con HeyGen
-            this.log('🎬 Creando sesión con HeyGen...');
+            // 2. Crear sesión Y OBTENER DATOS WebRTC (Paso único)
+            this.log('🎬 Creando sesión con HeyGen (Paso único)...');
             const startTime = Date.now();
-            this.heygenSession = await API.createHeyGenSession();
-            const latency = Date.now() - startTime;
             
-            this.log(`✅ Sesión HeyGen creada: ${this.heygenSession.sessionId}`, 'success');
-            this.log(`⏱️ Latencia: ${latency}ms`);
+            // sessionData ahora contiene { sessionId: "...", webrtcData: { ... } }
+            const sessionData = await API.createHeyGenSession();
+            
+            // ✅ CORRECTO - Buscar realtime_endpoint
+if (!sessionData.sessionId || !sessionData.webrtcData || !sessionData.webrtcData.realtime_endpoint) {
+    console.error("Respuesta de /session incompleta:", sessionData);
+    throw new Error("El backend no devolvió sessionId y realtime_endpoint en /session.");
+}
+
+            // Guardamos el ID de sesión
+            this.sessionId = sessionData.sessionId; 
+            this.log(`✅ Sesión HeyGen creada: ${this.sessionId}`, 'success');
+            
+            // 3. Configurar WebRTC con los datos recibidos
+            this.log('🔌 Configurando conexión WebRTC...');
+            // Pasamos los datos de WebRTC (sdp, server_url, etc.)
+            await this.setupWebRTC(sessionData.webrtcData); 
+            this.log('✅ Conexión WebRTC establecida.', 'success');
+
+            const latency = Date.now() - startTime;
+            this.log(`✅ Sesión activada y lista en ${latency}ms`, 'success');
             this.updateLatency(latency);
+            
+            // 4. Ocultar overlay del video
+            this.elements.videoOverlay.classList.add('hidden');
 
-            // 3. Ocultar overlay del video (cuando implementemos WebRTC)
-            // this.elements.videoOverlay.classList.add('hidden');
-
-            // 4. Actualizar UI
+            // 5. Actualizar UI
             this.isInitialized = true;
             this.updateStatus('Listo', 'ready');
             this.elements.recordBtn.disabled = false;
@@ -127,7 +145,6 @@ class AvatarApp {
         this.elements.recordBtnText.textContent = '🔴 Escuchando...';
         this.updateStatus('Escuchando', 'recording');
         
-        // Iniciar reconocimiento de voz
         SpeechManager.start();
         this.log('🎤 Reconocimiento de voz iniciado');
     }
@@ -141,83 +158,176 @@ class AvatarApp {
         this.elements.recordBtnText.textContent = 'Procesando...';
         this.updateStatus('Procesando', 'processing');
         
-        // Detener reconocimiento de voz
         SpeechManager.stop();
         this.log('🛑 Reconocimiento de voz detenido');
     }
+    
+    // Función de WebRTC (sin cambios desde la última vez)
+// En app.js, REEMPLAZA la función setupWebRTC() por esta:
 
-    // Manejar resultado del reconocimiento de voz
-    async handleSpeechResult(text) {
-        if (!text || text.trim().length === 0) {
-            this.log('⚠️ No se detectó texto', 'warning');
-            this.resetRecordButton();
-            return;
-        }
-
-        this.log(`📝 Texto detectado: "${text}"`, 'success');
-
-        try {
-            // 1. Enviar texto a ElevenLabs para generar audio
-            this.log('🎙️ Enviando texto a ElevenLabs...');
-            const startTime = Date.now();
-            
-            const responseAudio = await API.sendTextToElevenLabs(text);
-            
-            const latency = Date.now() - startTime;
-            this.log(`✅ Audio generado en ${latency}ms`, 'success');
-            this.updateLatency(latency);
-
-            // 2. Reproducir audio
-            this.log('🔊 Reproduciendo respuesta...');
-            await AudioManager.playAudio(responseAudio);
-            
-            // 3. Enviar texto a HeyGen para lip-sync
-            if (this.heygenSession) {
-                this.log('🎬 Enviando texto a HeyGen para lip-sync...');
-                await API.sendTextToHeyGen(text);
-                this.log('✅ Lip-sync iniciado', 'success');
-            }
-
-            this.log('✅ Proceso completado', 'success');
-
-        } catch (error) {
-            this.log(`❌ Error: ${error.message}`, 'error');
-        } finally {
-            this.resetRecordButton();
-        }
+async setupWebRTC(webrtcData) {
+    // Ya NO usamos sdp, usamos el realtime_endpoint
+    if (!webrtcData.realtime_endpoint) {
+        console.error("Falta realtime_endpoint:", webrtcData);
+        throw new Error("HeyGen no devolvió realtime_endpoint");
     }
 
-    // Manejar errores del reconocimiento de voz
+    this.log('🔌 Conectando via WebSocket a HeyGen...');
+    
+    // Crear conexión WebSocket
+    this.ws = new WebSocket(webrtcData.realtime_endpoint);
+    
+    this.ws.onopen = () => {
+        this.log('✅ WebSocket conectado al avatar', 'success');
+    };
+    
+    this.ws.onmessage = (event) => {
+        this.handleAvatarMessage(event);
+    };
+    
+    this.ws.onerror = (error) => {
+        this.log('❌ Error WebSocket: ' + error, 'error');
+    };
+    
+    this.ws.onclose = () => {
+        this.log('🔌 WebSocket cerrado');
+    };
+
+    // Esperar a que conecte
+    return new Promise((resolve, reject) => {
+        this.ws.onopen = () => {
+            this.log('✅ WebSocket conectado', 'success');
+            resolve();
+        };
+        this.ws.onerror = (error) => {
+            reject(error);
+        };
+    });
+}
+
+// Agregar DESPUÉS de setupWebRTC() en app.js
+
+handleAvatarMessage(event) {
+    try {
+        const data = JSON.parse(event.data);
+        
+        console.log('📩 Mensaje del avatar:', data);
+        
+        switch(data.type) {
+            case 'avatar_start_talking':
+                this.log('🗣️ Avatar hablando...', 'success');
+                break;
+                
+            case 'avatar_stop_talking':
+                this.log('🤐 Avatar terminó', 'success');
+                break;
+                
+            case 'stream':
+                // Video stream - actualizar video
+                if (data.video_url) {
+                    this.elements.avatarVideo.src = data.video_url;
+                    this.elements.avatarVideo.play();
+                }
+                break;
+                
+                case 'error':
+                    this.log('❌ Error avatar: ' + (data.error?.message || JSON.stringify(data.error)), 'error');
+                    console.error('Error completo:', data);
+                    break;
+        }
+    } catch (error) {
+        console.error('Error procesando mensaje:', error);
+    }
+}
+
+    // Manejar resultado del reconocimiento de voz (sin cambios)
+// REEMPLAZA la parte de HeyGen en handleSpeechResult() por esto:
+
+async handleSpeechResult(text) {
+    if (!text || text.trim().length === 0) {
+        this.log('⚠️ No se detectó texto', 'warning');
+        this.resetRecordButton();
+        return;
+    }
+
+    this.log(`📝 Texto detectado: "${text}"`, 'success');
+
+    try {
+        // 1. Generar audio con ElevenLabs (mantener igual)
+        this.log('🎙️ Enviando texto a ElevenLabs...');
+        const startTime = Date.now();
+        const responseAudio = await API.sendTextToElevenLabs(text);
+        const latency = Date.now() - startTime;
+        this.log(`✅ Audio generado en ${latency}ms`, 'success');
+        this.updateLatency(latency);
+        
+        // 2. Enviar a HeyGen VIA WEBSOCKET (NUEVO)
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.log('🎬 Enviando a avatar via WebSocket...');
+            
+            const message = {
+                type: 'repeat',  // ✅ Cambiar de 'speak' a 'repeat'
+                text: text
+            };
+            
+            this.ws.send(JSON.stringify(message));
+            this.log('✅ Lip-sync enviado', 'success');
+        } else {
+            this.log('⚠️ WebSocket no conectado', 'warning');
+        }
+
+        // 3. Reproducir audio (mantener igual)
+        this.log('🔊 Reproduciendo respuesta...');
+        await AudioManager.playAudio(responseAudio);
+        this.log('✅ Proceso completado', 'success');
+
+    } catch (error) {
+        this.log(`❌ Error: ${error.message}`, 'error');
+    } finally {
+        this.resetRecordButton();
+    }
+}
+
+    // Manejar errores del reconocimiento de voz (sin cambios)
     handleSpeechError(error) {
         this.log(`❌ Error de reconocimiento: ${error}`, 'error');
         this.resetRecordButton();
     }
 
-    // Detener sesión
-    stopSession() {
-        this.log('🛑 Cerrando sesión...');
-        
-        // Detener reconocimiento si está activo
-        if (this.isRecording) {
-            SpeechManager.stop();
-        }
-        
-        AudioManager.cleanup();
-        this.heygenSession = null;
-        this.isInitialized = false;
-        
-        this.updateStatus('Desconectado', 'idle');
-        this.elements.initBtn.disabled = false;
-        this.elements.recordBtn.disabled = true;
-        this.elements.stopBtn.disabled = true;
-        this.elements.initBtn.style.display = 'flex';
-        this.elements.recordBtn.style.display = 'none';
-        this.updateLatency(0);
-        
-        this.log('✅ Sesión cerrada', 'success');
-    }
+    // Detener sesión (sin cambios)
+// REEMPLAZA stopSession() por esto:
 
-    // Helpers
+stopSession() {
+    this.log('🛑 Cerrando sesión...');
+    
+    // Cerrar WebSocket en vez de RTCPeerConnection
+    if (this.ws) {
+        this.ws.close();
+        this.ws = null;
+        this.log('🔌 WebSocket cerrado');
+    }
+    
+    if (this.isRecording) {
+        SpeechManager.stop();
+    }
+    
+    AudioManager.cleanup();
+    
+    this.sessionId = null;
+    this.isInitialized = false;
+    
+    this.updateStatus('Desconectado', 'idle');
+    this.elements.initBtn.disabled = false;
+    this.elements.recordBtn.disabled = true;
+    this.elements.stopBtn.disabled = true;
+    this.elements.initBtn.style.display = 'flex';
+    this.elements.recordBtn.style.display = 'none';
+    this.updateLatency(0);
+    
+    this.log('✅ Sesión cerrada', 'success');
+}
+
+    // Helpers (sin cambios)
     resetRecordButton() {
         this.elements.recordBtnText.textContent = 'Mantén presionado para hablar';
         this.updateStatus('Listo', 'ready');

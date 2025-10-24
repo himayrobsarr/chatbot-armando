@@ -1,149 +1,122 @@
+// backend/services/HeyGenService.js
+
 const axios = require('axios');
-const { logMetrics, handleApiError } = require('../utils');
 
 /**
- * Servicio para interactuar con HeyGen API
+ * Servicio para interactuar con HeyGen API (CORREGIDO DE NUEVO)
  */
 class HeyGenService {
-  constructor(apiKey) {
-    this.apiKey = apiKey;
-    this.baseUrl = 'https://api.heygen.com/v1';
-  }
+    
+    constructor(apiKey, avatarId) {
+        if (!apiKey || !avatarId) {
+            throw new Error("HeyGenService: Se requieren apiKey y avatarId en el constructor.");
+        }
+        
+        this.apiKey = apiKey;
+        this.avatarId = avatarId;
+        
+        // =================================================================
+        // CORRECCIÓN FINAL: El baseUrl DEBE ser v1
+        // =================================================================
+        this.baseUrl = 'https://api.heygen.com/v1';
 
-  /**
-   * Crea una nueva sesión de streaming
-   * @param {object} options - Opciones de calidad
-   * @returns {Promise<object>} Datos de la sesión
-   */
-  async createSession(options = {}) {
-    const startTime = Date.now();
+        this.client = axios.create({
+            baseURL: this.baseUrl,
+            headers: {
+                'X-Api-Key': this.apiKey,
+                'Content-Type': 'application/json'
+            }
+        });
 
-    try {
-      console.log('🔍 Creando sesión HeyGen...');
+        console.log('✅ HeyGenService inicializado (URL v1).');
+        console.log(`   > Usando Avatar ID: ${this.avatarId}`);
+    }
 
-      const response = await axios.post(
-        `${this.baseUrl}/streaming.new`,
-        {
-          quality: options.quality || 'low',
-          version: options.version || 'v2'
-        },
-        {
-          headers: {
-            'X-Api-Key': this.apiKey,
-            'Content-Type': 'application/json'
+    /**
+     * Crea una nueva sesión de streaming (streaming.new)
+     */
+// En backend/services/HeyGenService.js
+// REEMPLAZA createSession() por esto:
+
+async createSession(options = {}) {
+  const startTime = Date.now();
+  console.log(`🔍 Creando sesión HeyGen con Avatar ID: ${this.avatarId}`);
+
+  try {
+      const response = await this.client.post(
+          '/streaming.new',
+          {
+              avatar_id: this.avatarId,
+              quality: options.quality || 'low',
+              version: 'v2' // ✅ v2 usa WebSocket/LiveKit
           },
-          timeout: 30000
-        }
+          { timeout: 30000 }
       );
 
       const latency = Date.now() - startTime;
-      logMetrics('HeyGen Session', latency, {
-        sessionId: response.data.data?.session_id
-      });
+      console.log(`📊 [HeyGen Session] ${latency}ms`);
 
       return {
-        sessionData: response.data,
-        latency
+          sessionData: response.data,
+          latency
       };
-    } catch (error) {
-      throw handleApiError(error, 'HeyGen Session');
-    }
+  } catch (error) {
+      console.error("❌ Error createSession:", error.response?.data || error.message);
+      throw error;
   }
+}
 
-  /**
-   * Inicia el streaming de una sesión
-   * @param {string} sessionId - ID de la sesión
-   * @returns {Promise<object>} Respuesta de inicio
-   */
-  async startStreaming(sessionId) {
-    const startTime = Date.now();
+    /**
+     * Envía texto para lip-sync (streaming.task)
+     */
+    async sendText(sessionId, text) {
+        const startTime = Date.now();
+        console.log(`💬 Enviando texto a sesión ${sessionId}...`);
 
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/streaming.start`,
-        { session_id: sessionId },
-        {
-          headers: {
-            'X-Api-Key': this.apiKey,
-            'Content-Type': 'application/json'
-          }
+        try {
+            // =================================================================
+            // CORRECCIÓN FINAL: Usar el endpoint 'streaming.task' (v1)
+            // =================================================================
+            const response = await this.client.post(
+                '/streaming.task', // <-- Endpoint v1
+                {
+                    session_id: sessionId,
+                    text: text,
+                    task_type: 'repeat'
+                }
+            );
+
+            const latency = Date.now() - startTime;
+            console.log(`📊 [HeyGen Talk/Task] ${latency}ms`);
+            
+            return {
+                response: response.data,
+                latency
+            };
+        } catch (error) {
+            console.error("❌ Error en HeyGenService.sendText:", error.response ? error.response.data : error.message);
+            throw error;
         }
-      );
-
-      const latency = Date.now() - startTime;
-      logMetrics('HeyGen Start', latency);
-
-      return {
-        response: response.data,
-        latency
-      };
-    } catch (error) {
-      throw handleApiError(error, 'HeyGen Start');
     }
-  }
 
-  /**
-   * Envía texto para lip-sync
-   * @param {string} sessionId - ID de la sesión
-   * @param {string} text - Texto a procesar
-   * @param {string} taskType - Tipo de tarea
-   * @returns {Promise<object>} Respuesta de la tarea
-   */
-  async sendText(sessionId, text, taskType = 'repeat') {
-    const startTime = Date.now();
+    /**
+     * Detiene el streaming de una sesión
+     */
+    async stopStreaming(sessionId) {
+        console.log(`🛑 Cerrando sesión ${sessionId}...`);
+        try {
+            const response = await this.client.post(
+                '/streaming.stop',
+                { session_id: sessionId }
+            );
 
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/streaming.task`,
-        {
-          session_id: sessionId,
-          text: text,
-          task_type: taskType
-        },
-        {
-          headers: {
-            'X-Api-Key': this.apiKey,
-            'Content-Type': 'application/json'
-          }
+            console.log('✅ Sesión HeyGen cerrada');
+            return response.data;
+        } catch (error) {
+            console.error("❌ Error en HeyGenService.stopStreaming:", error.response ? error.response.data : error.message);
+            throw error;
         }
-      );
-
-      const latency = Date.now() - startTime;
-      logMetrics('HeyGen Speak', latency, { textLength: text.length });
-
-      return {
-        response: response.data,
-        latency
-      };
-    } catch (error) {
-      throw handleApiError(error, 'HeyGen Speak');
     }
-  }
-
-  /**
-   * Detiene el streaming de una sesión
-   * @param {string} sessionId - ID de la sesión
-   * @returns {Promise<object>} Respuesta de cierre
-   */
-  async stopStreaming(sessionId) {
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/streaming.stop`,
-        { session_id: sessionId },
-        {
-          headers: {
-            'X-Api-Key': this.apiKey,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('✅ Sesión HeyGen cerrada');
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'HeyGen Stop');
-    }
-  }
 }
 
 module.exports = HeyGenService;

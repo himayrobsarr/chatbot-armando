@@ -1,25 +1,30 @@
+// backend/config/index.js
+
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+// No necesitamos dotenv porque estamos poniendo las claves a mano
+// require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-// Importar variables temporales desde utils
-const { ELEVEN_API_KEY, ELEVEN_VOICE_ID, HEYGEN_API_KEY } = require('../utils');
+// =================================================================
+// TUS CLAVES (HARDCODEADAS)
+// =================================================================
+// (Asegúrate de que tu clave de ElevenLabs esté completa si la anterior estaba cortada)
+const ELEVEN_API_KEY = "679b4626ae90f5ba131773293827f69568861885ae5ce07fcbde05698a284169"; // <-- ¡PON TU CLAVE COMPLETA DE ELEVENLABS!
+const ELEVEN_VOICE_ID = "YExhVa4bZONzeingloMX";
 
-// Configuración de APIs (usando variables temporales)
-// const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY;
-// const ELEVEN_VOICE_ID = process.env.ELEVEN_VOICE_ID;
-// const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY;
+// ¡AQUÍ ESTÁ LA CLAVE NUEVA!
+const HEYGEN_API_KEY = "sk_V2_hgu_knS2fHStXbM_vGSQyQPMtnGON2brKRqyOaEWmp4EvIq2"; 
+const HEYGEN_AVATAR_ID = "Thaddeus_CasualLook_public";
+// =================================================================
 
 // Configuración del servidor
 const PORT = process.env.PORT || 3000;
 
-// Estado global para prototipo rápido
-let heygenSessionData = null;
-
 // Debug: Mostrar estado de las keys al iniciar
-console.log('\n🔑 Estado de API Keys:');
+console.log('\n🔑 Estado de API Keys (Hardcodeadas):');
 console.log('ELEVEN_API_KEY:', ELEVEN_API_KEY ? `✅ Cargada (${ELEVEN_API_KEY.substring(0, 10)}...)` : '❌ NO cargada');
 console.log('ELEVEN_VOICE_ID:', ELEVEN_VOICE_ID ? `✅ Cargada (${ELEVEN_VOICE_ID})` : '❌ NO cargada');
 console.log('HEYGEN_API_KEY:', HEYGEN_API_KEY ? `✅ Cargada (${HEYGEN_API_KEY.substring(0, 20)}...)` : '❌ NO cargada');
+console.log('HEYGEN_AVATAR_ID:', HEYGEN_AVATAR_ID ? `✅ Cargada (${HEYGEN_AVATAR_ID.substring(0, 10)}...)` : '❌ NO cargada');
 console.log('');
 
 module.exports = {
@@ -27,9 +32,11 @@ module.exports = {
   ELEVEN_API_KEY,
   ELEVEN_VOICE_ID,
   HEYGEN_API_KEY,
+  HEYGEN_AVATAR_ID, 
+  
   heygenSessionData: {
-    get: () => heygenSessionData,
-    set: (data) => { heygenSessionData = data; },
-    clear: () => { heygenSessionData = null; }
+    get: () => null,
+    set: (data) => {},
+    clear: () => {}
   }
 };
