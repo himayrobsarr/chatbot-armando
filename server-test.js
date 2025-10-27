@@ -11,9 +11,9 @@ const PORT = 3000;
 // KEYS HARDCODEADAS
 const ELEVEN_API_KEY = '679b4626ae90f5ba131773293827f69568861885ae5ce07fcbde05698a284169';
 const ELEVEN_VOICE_ID = 'YExhVa4bZONzeingloMX';
-const HEYGEN_API_KEY = 'sk_V2_hgu_kZVrYxwkGQf_gOFCvaF8NoNmb0rjUrPLHV79DGnygUWW';
+const HEYGEN_API_KEY = 'sk_V2_hgu_k9K6pjuIAtm_Ajt8FSwhdZXEv8qjyY7OFamirOF19nLe';
 
-console.log('\ní´‘ Keys cargadas:');
+console.log('\nï¿½ï¿½ï¿½ Keys cargadas:');
 console.log('ELEVEN_API_KEY:', ELEVEN_API_KEY ? 'âœ… OK' : 'âŒ FALTA');
 console.log('ELEVEN_VOICE_ID:', ELEVEN_VOICE_ID ? 'âœ… OK' : 'âŒ FALTA');
 console.log('HEYGEN_API_KEY:', HEYGEN_API_KEY ? 'âœ… OK' : 'âŒ FALTA');
@@ -86,7 +86,7 @@ app.post('/test/heygen', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`íº€ Servidor test en http://localhost:${PORT}`);
+  console.log(`ï¿½ï¿½ï¿½ Servidor test en http://localhost:${PORT}`);
   console.log('\nEndpoints:');
   console.log('  GET  /health');
   console.log('  POST /test/elevenlabs');

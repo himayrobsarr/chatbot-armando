@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { setupMiddlewares } = require('./middleware');
 const { setupWebSocket } = require('./websocket');
 const config = require('./config');
@@ -7,19 +8,38 @@ const { validateKeys } = require('./utils');
 // Importar rutas
 const healthRoutes = require('./routes/health');
 const elevenLabsRoutes = require('./routes/elevenlabs');
-const heyGenRoutes = require('./routes/heygen');
+const heygenRoutes = require('./routes/heygen');
 const flowRoutes = require('./routes/flows');
 
 const app = express();
 
 // Configurar middlewares
+// ...
+// Habilitar CORS para múltiples orígenes
+const allowedOrigins = [
+  'http://127.0.0.1:8080', // Puerto antiguo
+  'http://127.0.0.1:5500'  // Puerto nuevo
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+      // Permitir peticiones si el origen está en la lista blanca
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+      } else {
+          callback(new Error('Origen no permitido por CORS'));
+      }
+  }
+}));
+// ...
 setupMiddlewares(app);
 
 // Configurar rutas
 app.use('/', healthRoutes);
 app.use('/api/test', elevenLabsRoutes);
-app.use('/api/test/heygen', heyGenRoutes);
+app.use('/api/heygen', heygenRoutes);
 app.use('/api/test', flowRoutes);
+
 
 // Iniciar servidor
 const server = app.listen(config.PORT, () => {

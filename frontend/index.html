@@ -1,82 +1,140 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avatar Digital - Demo</title>
-    <link rel="stylesheet" href="css/estyle.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avatar Digital - Demo</title>
+  <link rel="stylesheet" href="css/estyle.css" />
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.5/dist/livekit-client.umd.min.js" defer></script>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>🎙️ Avatar Digital con Voz en Tiempo Real</h1>
-            <p class="subtitle">Habla y observa cómo el avatar responde con lip-sync perfecto</p>
-        </header>
+  <div class="container">
+    <header class="header">
+      <h1>🎙️ Avatar Digital con Voz en Tiempo Real</h1>
+      <p class="subtitle">Pulsa el botón para activar el avatar</p>
+    </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Video Container -->
-            <div class="video-container">
-                <video id="avatarVideo" autoplay playsinline muted></video>
-                <div class="video-overlay" id="videoOverlay">
-                    <div class="loader"></div>
-                    <p>Inicializando avatar...</p>
-                </div>
-            </div>
+    <main class="main-content">
+      <section class="video-container">
+        <video id="avatarVideo" autoplay playsinline></video>
+        <div class="video-overlay" id="videoOverlay">
+          <div class="loader"></div>
+          <p>Avatar esperando interacción...</p>
+        </div>
+      </section>
 
-            <!-- Status Panel -->
-            <div class="status-panel">
-                <div class="status-item">
-                    <span class="status-label">Estado:</span>
-                    <span class="status-value" id="statusValue">
-                        <span class="status-dot status-idle"></span>
-                        Desconectado
-                    </span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Latencia:</span>
-                    <span class="status-value" id="latencyValue">--- ms</span>
-                </div>
-            </div>
+      <div class="controls">
+        <button id="startAvatarBtn" class="btn btn-primary">🗣️ Habla conmigo</button>
+      </div>
 
-            <!-- Controls -->
-            <div class="controls">
-                <button class="btn btn-primary" id="initBtn">
-                    <span class="btn-icon">🚀</span>
-                    Iniciar Avatar
-                </button>
-                
-                <button class="btn btn-record" id="recordBtn" disabled>
-                    <span class="btn-icon">🎤</span>
-                    <span id="recordBtnText">Mantén presionado para hablar</span>
-                </button>
+      <details class="debug-console" open>
+        <summary>🔍 Consola de Debug</summary>
+        <div class="console-content" id="debugConsole"></div>
+      </details>
+    </main>
 
-                <button class="btn btn-secondary" id="stopBtn" disabled>
-                    <span class="btn-icon">🛑</span>
-                    Detener Sesión
-                </button>
-            </div>
+    <footer class="footer">
+      <p>Powered by <strong>HeyGen</strong> + <strong>LiveKit</strong></p>
+    </footer>
+  </div>
 
-            <!-- Debug Console (Optional) -->
-            <details class="debug-console">
-                <summary>🔍 Consola de Debug</summary>
-                <div class="console-content" id="debugConsole">
-                    <p class="console-msg">Sistema listo. Presiona "Iniciar Avatar"</p>
-                </div>
-            </details>
-        </main>
+  <script>
+    const videoEl = document.getElementById('avatarVideo');
+    const overlay = document.getElementById('videoOverlay');
+    const debug = document.getElementById('debugConsole');
+    const startBtn = document.getElementById('startAvatarBtn');
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p>Powered by <strong>ElevenLabs</strong> + <strong>HeyGen</strong></p>
-        </footer>
-    </div>
+    async function startAvatar() {
+      startBtn.disabled = true;
+      startBtn.innerText = '🔄 Inicializando...';
+      overlay.querySelector('p').innerText = 'Inicializando avatar...';
+      console.log('🚀 Iniciando AvatarApp (modo manual)');
 
-    <!-- Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/audio.js"></script>
-    <script src="js/speech.js"></script>
-    <script src="js/app.js"></script>
+      try {
+        // Crear sesión HeyGen
+        console.log('🎬 Creando sesión en HeyGen...');
+        const res = await fetch('https://api.heygen.com/v1/streaming.new', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer k9K6pjuIAtm',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            avatar_id: 'Wayne_20240711',
+            version: 'v2',
+            quality: 'medium'
+          })
+        });
+
+        const data = await res.json();
+        if (!data?.data) throw new Error('No se pudo crear sesión');
+        const { session_id, livekit_agent_token, url } = data.data;
+        console.log('✅ Sesión creada:', data.data);
+
+        // Conectar a LiveKit
+        const room = new window.LivekitClient.Room();
+        await room.connect(url, livekit_agent_token);
+        console.log('✅ Conectado al servidor LiveKit');
+
+        // Esperar al video remoto
+        let isAvatarReady = false;
+        room.on('trackSubscribed', async (track) => {
+          if (track.kind === 'video') {
+            console.log('📹 Video recibido del avatar — sesión lista');
+            track.attach(videoEl);
+            overlay.style.display = 'none';
+            isAvatarReady = true;
+
+            // Espera unos segundos antes de enviar el saludo
+            setTimeout(async () => {
+              if (!isAvatarReady) return;
+              console.log('💬 Enviando saludo inicial (avatar ya transmitiendo)...');
+              const talk = await fetch('https://api.heygen.com/v1/streaming.task', {
+                method: 'POST',
+                headers: {
+                  'Authorization': 'Bearer k9K6pjuIAtm',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  session_id,
+                  task_type: 'talk',
+                  text: 'Hola, soy tu asistente virtual. ¿En qué puedo ayudarte hoy?'
+                })
+              });
+              const result = await talk.json();
+              console.log('🗣️ Respuesta HeyGen:', result);
+            }, 2000);
+          }
+        });
+
+        // Desbloquear audio (por política del navegador)
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        await ctx.resume();
+        console.log('🔊 AudioContext reanudado manualmente');
+
+        debug.innerHTML += `<p class="console-msg success">✅ Avatar inicializado correctamente</p>`;
+      } catch (err) {
+        console.error('❌ Error al inicializar avatar:', err);
+        debug.innerHTML += `<p class="console-msg error">${err.message}</p>`;
+        startBtn.disabled = false;
+        startBtn.innerText = 'Reintentar';
+      }
+    }
+
+    startBtn.addEventListener('click', startAvatar);
+  </script>
+
+  <style>
+    body { background:#0e0e0e; color:#fff; text-align:center; font-family:Arial; }
+    .video-container { position:relative; width:80%; max-width:800px; margin:2rem auto; }
+    video { width:100%; border-radius:12px; background:black; }
+    .video-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.6);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .btn-primary { background:#10b981; border:none; padding:1rem 2rem; border-radius:8px; cursor:pointer; font-size:1.1rem; }
+    .btn-primary:disabled { background:#555; cursor:not-allowed; }
+    .console-msg.success { color:#10b981; }
+    .console-msg.error { color:#ef4444; }
+  </style>
 </body>
 </html>

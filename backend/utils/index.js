@@ -5,7 +5,7 @@
 // Variables de entorno (TEMPORAL - Solo para pruebas)
 const ELEVEN_API_KEY = '679b4626ae90f5ba131773293827f69568861885ae5ce07fcbde05698a284169';
 const ELEVEN_VOICE_ID = 'YExhVa4bZONzeingloMX';
-const HEYGEN_API_KEY = 'sk_V2_hgu_kZVrYxwkGQf_gOFCvaF8NoNmb0rjUrPLHV79DGnygUWW';
+const HEYGEN_API_KEY = 'k9K6pjuIAtm';
 
 /**
  * Registra métricas de rendimiento

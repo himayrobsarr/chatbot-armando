@@ -1,106 +1,52 @@
-// api.js - Módulo para comunicación con el backend
+// frontend/js/api.js
+const BACKEND_URL = 'http://localhost:3000';
 
 const API = {
-    baseURL: 'http://localhost:3000',
-    
-    // Verificar estado del backend
+
     async checkHealth() {
         try {
-            const response = await fetch(`${this.baseURL}/health`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error checking health:', error);
-            throw error;
-        }
-    },
-
-    // Crear sesión con HeyGen (Paso único)
-    async createHeyGenSession() {
-        try {
-            const response = await fetch(`${this.baseURL}/api/test/heygen/session`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            // Llama a la ruta definida en 'backend/routes/health.js'
+            const response = await fetch(`${BACKEND_URL}/health`);
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error de red: ${response.statusText}`);
             }
-            
-            // Devuelve { sessionId: "...", webrtcData: { sdp: "...", ... } }
             return await response.json();
         } catch (error) {
-            console.error('Error creating HeyGen session:', error);
-            throw error;
+            console.error('Error en API.checkHealth:', error);
+            throw new Error('No se pudo conectar al backend.');
         }
     },
 
-    // La función 'startHeyGenSession' se ha eliminado
-
-    // Enviar texto a ElevenLabs para generar audio
-    async sendTextToElevenLabs(text) {
+  
+    async getHeyGenToken() {
         try {
-            const response = await fetch(`${this.baseURL}/api/test/elevenlabs`, {
+            // Llama a la NUEVA ruta definida en 'backend/routes/heygen.js'
+            const response = await fetch(`${BACKEND_URL}/api/heygen/token`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text })
             });
-            
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const err = await response.json();
+                throw new Error(err.error || `Error del backend (${response.status})`);
+            }
+
+            const data = await response.json();
+            if (!data.token) {
+                throw new Error('El backend no devolvió un token.');
             }
             
-            return await response.blob();
-        } catch (error) {
-            console.error('Error sending text to ElevenLabs:', error);
-            throw error;
-        }
-    },
+            return data.token; // 'app.js' recibirá este token
 
-    // Enviar texto a HeyGen para lip-sync (Esta función está correcta)
-    async sendTextToHeyGen(text, sessionId) {
-        try {
-            const response = await fetch(`${this.baseURL}/api/test/heygen/speak`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ text, sessionId })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            return await response.json();
         } catch (error) {
-            console.error('Error sending text to HeyGen:', error);
-            throw error;
+            console.error('Error en API.getHeyGenToken:', error);
+            throw error; // Propaga el error para que app.js lo maneje
         }
-    },
-
-    // Establecer conexión WebSocket para streaming en tiempo real
-    createWebSocket() {
-        const ws = new WebSocket('ws://localhost:3000');
-        
-        ws.onopen = () => {
-            console.log('✅ WebSocket conectado');
-        };
-        
-        ws.onerror = (error) => {
-            console.error('❌ Error WebSocket:', error);
-        };
-        
-        ws.onclose = () => {
-            console.log('🔌 WebSocket desconectado');
-        };
-        
-        return ws;
     }
-};
 
-// Hacer disponible globalmente
-window.API = API;
+
+};
