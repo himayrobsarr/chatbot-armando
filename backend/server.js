@@ -14,83 +14,105 @@ const chatbotRoutes = require('./routes/chatbot');
 
 const app = express();
 
-// Configurar middlewares
-// ...
-// Habilitar CORS para múltiples orígenes
+// ==========================
+// 🧱 Configuración de CORS
+// ==========================
 const allowedOrigins = [
-  'http://127.0.0.1:8080', // Puerto antiguo
-  'http://127.0.0.1:5500'  // Puerto nuevo
+  'http://127.0.0.1:8080',
+  'http://127.0.0.1:5500',
+  'http://localhost:3000',
+  'https://chatbot-armando.vercel.app'  // ← AGREGAR ESTO
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-      // Permitir peticiones si el origen está en la lista blanca
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-          callback(null, true);
-      } else {
-          callback(new Error('Origen no permitido por CORS'));
-      }
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origen no permitido por CORS'));
+    }
   }
 }));
-// ...
+
+// ==========================
+// ⚙️ Configuración general
+// ==========================
 setupMiddlewares(app);
 
-// Configurar rutas
+// ==========================
+// 🌐 Rutas principales
+// ==========================
 app.use('/', healthRoutes);
 app.use('/api/test', elevenLabsRoutes);
 app.use('/api/heygen', heygenRoutes);
 app.use('/api/test', flowRoutes);
 app.use('/api', chatbotRoutes);
 
+// ==========================
+// 🚀 Inicialización del servidor
+// ==========================
+let server = null;
 
-// Iniciar servidor
-const server = app.listen(config.PORT, () => {
-  console.log('\n🚀 ========================================');
-  console.log(`   Servidor corriendo en http://localhost:${config.PORT}`);
-  console.log('   ========================================\n');
+// Si estamos en entorno local → iniciar servidor manualmente
+if (process.env.NODE_ENV !== 'production') {
+  server = app.listen(config.PORT, () => {
+    console.log('\n🚀 ========================================');
+    console.log(`   Servidor corriendo en http://localhost:${config.PORT}`);
+    console.log('   ========================================\n');
 
-  const missingKeys = validateKeys(config);
-  if (missingKeys.length > 0) {
-    console.log('⚠️  CONFIGURACIÓN INCOMPLETA:');
-    missingKeys.forEach((key) => console.log(`   ❌ ${key} no configurada`));
-    console.log('\n   Edita server/.env con tus API keys\n');
-  } else {
-    console.log('✅ Configuración completa\n');
-  }
+    const missingKeys = validateKeys(config);
+    if (missingKeys.length > 0) {
+      console.log('⚠️  CONFIGURACIÓN INCOMPLETA:');
+      missingKeys.forEach((key) => console.log(`   ❌ ${key} no configurada`));
+      console.log('\n   Edita backend/.env con tus API keys\n');
+    } else {
+      console.log('✅ Configuración completa\n');
+    }
 
-  console.log('📋 Endpoints disponibles:');
-  console.log('   GET  /health');
-  console.log('   POST /api/test/elevenlabs');
-  console.log('   POST /api/test/heygen/session');
-  console.log('   POST /api/test/heygen/start');
-  console.log('   POST /api/test/heygen/speak');
-  console.log('   POST /api/test/heygen/close');
-  console.log('   POST /api/test/full-flow');
-  console.log('\n');
-});
+    console.log('📋 Endpoints disponibles:');
+    console.log('   GET  /health');
+    console.log('   POST /api/test/elevenlabs');
+    console.log('   POST /api/test/heygen/session');
+    console.log('   POST /api/test/heygen/start');
+    console.log('   POST /api/test/heygen/speak');
+    console.log('   POST /api/test/heygen/close');
+    console.log('   POST /api/test/full-flow');
+    console.log('   POST /api/chatbot');
+    console.log('\n');
+  });
 
-// Configurar WebSocket
-setupWebSocket(server);
+  // Inicializar WebSocket solo en entorno local
+  setupWebSocket(server);
+}
 
-// Manejo de errores global
+// ==========================
+// ⚠️ Manejo de errores global
+// ==========================
 process.on('unhandledRejection', (error) => {
   console.error('❌ Error no manejado:', error);
 });
 
 process.on('SIGTERM', () => {
   console.log('👋 Cerrando servidor...');
-  server.close(() => {
-    console.log('✅ Servidor cerrado');
-    process.exit(0);
-  });
+  if (server) {
+    server.close(() => {
+      console.log('✅ Servidor cerrado');
+      process.exit(0);
+    });
+  }
 });
 
 process.on('SIGINT', () => {
   console.log('\n👋 Cerrando servidor...');
-  server.close(() => {
-    console.log('✅ Servidor cerrado');
-    process.exit(0);
-  });
+  if (server) {
+    server.close(() => {
+      console.log('✅ Servidor cerrado');
+      process.exit(0);
+    });
+  }
 });
 
-module.exports = { app, server };
+// ==========================
+// ✅ Exportar app para Vercel
+// ==========================
+module.exports = app;

@@ -167,7 +167,11 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000';
+    // ✅ Detecta automáticamente si estás en local o producción
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000'
+      : window.location.origin;
+    
     const micBtn = document.getElementById('micBtn');
     const statusEl = document.getElementById('status');
     const transcriptEl = document.getElementById('transcript');
