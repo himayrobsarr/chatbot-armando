@@ -3,35 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice Repeater - Eleven Labs</title>
+  <title>🎤 Chatbot de Voz Inteligente</title>
   <style>
-    * { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       background: #0f172a;
+      color: #fff;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
-      color: #fff;
     }
-
     .container {
       background: #1e293b;
       border-radius: 24px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       padding: 48px;
-      max-width: 700px;
+      max-width: 720px;
       width: 100%;
       border: 1px solid #334155;
     }
-
     h1 {
       text-align: center;
       margin-bottom: 8px;
@@ -39,16 +32,13 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
-
     .subtitle {
       text-align: center;
       color: #94a3b8;
       margin-bottom: 40px;
       font-size: 16px;
     }
-
     .mic-container {
       display: flex;
       flex-direction: column;
@@ -56,10 +46,8 @@
       gap: 24px;
       margin: 40px 0;
     }
-
     .mic-button {
-      width: 140px;
-      height: 140px;
+      width: 140px; height: 140px;
       border-radius: 50%;
       border: 4px solid #667eea;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -68,45 +56,19 @@
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
-
-    .mic-button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6);
-    }
-
-    .mic-button:active {
-      transform: scale(0.98);
-    }
-
+    .mic-button:hover { transform: scale(1.05); box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6); }
     .mic-button.recording {
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       border-color: #ef4444;
       animation: pulse 1.5s ease-in-out infinite;
     }
-
-    .mic-button.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
     @keyframes pulse {
-      0%, 100% { 
-        transform: scale(1); 
-        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
-      }
-      50% { 
-        transform: scale(1.08); 
-        box-shadow: 0 15px 60px rgba(239, 68, 68, 0.8);
-      }
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4); }
+      50% { transform: scale(1.08); box-shadow: 0 15px 60px rgba(239, 68, 68, 0.8); }
     }
-
     .status {
       text-align: center;
       padding: 16px 24px;
@@ -116,66 +78,42 @@
       min-width: 300px;
       transition: all 0.3s ease;
     }
+    .status.idle { background: #1e40af20; color: #60a5fa; border: 2px solid #1e40af40; }
+    .status.listening { background: #f59e0b20; color: #fbbf24; border: 2px solid #f59e0b40; }
+    .status.processing { background: #8b5cf620; color: #a78bfa; border: 2px solid #8b5cf640; }
+    .status.playing { background: #10b98120; color: #34d399; border: 2px solid #10b98140; }
 
-    .status.idle {
-      background: #1e40af20;
-      color: #60a5fa;
-      border: 2px solid #1e40af40;
-    }
-
-    .status.listening {
-      background: #f59e0b20;
-      color: #fbbf24;
-      border: 2px solid #f59e0b40;
-    }
-
-    .status.processing {
-      background: #8b5cf620;
-      color: #a78bfa;
-      border: 2px solid #8b5cf640;
-    }
-
-    .status.playing {
-      background: #10b98120;
-      color: #34d399;
-      border: 2px solid #10b98140;
-    }
-
-    .transcript-box {
+    .transcript-box, .response-box {
       background: #0f172a;
       border-radius: 16px;
       padding: 24px;
       margin-top: 32px;
-      min-height: 120px;
       border: 1px solid #334155;
+      min-height: 100px;
     }
-
-    .transcript-box h3 {
+    .transcript-box h3, .response-box h3 {
       color: #94a3b8;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 1.5px;
     }
-
-    .transcript-text {
+    .transcript-text, .response-text {
       color: #e2e8f0;
       font-size: 18px;
-      line-height: 1.7;
+      line-height: 1.6;
       font-style: italic;
     }
-
-    .transcript-text.empty {
-      color: #475569;
+    .response-text {
+      font-style: normal;
+      color: #a5b4fc;
     }
-
     .controls {
       display: flex;
       gap: 12px;
       justify-content: center;
       margin-top: 24px;
     }
-
     .btn {
       padding: 12px 24px;
       border: 2px solid #334155;
@@ -187,17 +125,7 @@
       color: #e2e8f0;
       font-size: 15px;
     }
-
-    .btn:hover {
-      background: #334155;
-      border-color: #475569;
-      transform: translateY(-2px);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
+    .btn:hover { background: #334155; border-color: #475569; transform: translateY(-2px); }
     .error-msg {
       background: #7f1d1d;
       color: #fca5a5;
@@ -208,360 +136,148 @@
       border: 2px solid #991b1b;
       display: none;
     }
-
-    .info-box {
-      background: #1e40af20;
-      border: 2px solid #1e40af40;
-      color: #93c5fd;
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-top: 20px;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    .wave {
-      display: inline-block;
-      animation: wave 2s ease-in-out infinite;
-    }
-
-    @keyframes wave {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(20deg); }
-      75% { transform: rotate(-20deg); }
-    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎤 Voice Repeater</h1>
-    <p class="subtitle">Habla y escucha tu voz con Eleven Labs</p>
+    <h1>🤖 Chatbot de Voz</h1>
+    <p class="subtitle">Habla y escucha respuestas generadas por IA</p>
 
     <div class="mic-container">
-      <button id="micBtn" class="mic-button" type="button">
-        🎤
-      </button>
-
-      <div id="status" class="status idle">
-        Presiona el micrófono para comenzar
-      </div>
+      <button id="micBtn" class="mic-button" type="button">🎤</button>
+      <div id="status" class="status idle">Presiona el micrófono para comenzar</div>
     </div>
 
     <div class="transcript-box">
-      <h3>📝 Transcripción</h3>
-      <div id="transcript" class="transcript-text empty">
-        Aquí aparecerá lo que digas...
-      </div>
+      <h3>🗣️ Tu voz (Transcripción)</h3>
+      <div id="transcript" class="transcript-text empty">Aquí aparecerá lo que digas...</div>
+    </div>
+
+    <div class="response-box">
+      <h3>💬 Respuesta del Chatbot</h3>
+      <div id="response" class="response-text">Esperando tu mensaje...</div>
     </div>
 
     <div class="controls">
       <button id="clearBtn" class="btn">🗑️ Limpiar</button>
-      <button id="testBtn" class="btn">🧪 Test Audio</button>
+      <button id="testBtn" class="btn">🧪 Test Chatbot</button>
     </div>
 
     <div id="errorMsg" class="error-msg"></div>
-    
-    <div id="infoBox" class="info-box" style="display: none;">
-      ℹ️ Permite el acceso al micrófono cuando el navegador lo solicite
-    </div>
   </div>
 
   <script>
-    console.log('🚀 Cargando aplicación...');
-
-    // ==================== CONFIGURACIÓN ====================
     const API_URL = 'http://localhost:3000';
-    
-    // ==================== ELEMENTOS DOM ====================
     const micBtn = document.getElementById('micBtn');
     const statusEl = document.getElementById('status');
     const transcriptEl = document.getElementById('transcript');
+    const responseEl = document.getElementById('response');
+    const errorMsg = document.getElementById('errorMsg');
     const clearBtn = document.getElementById('clearBtn');
     const testBtn = document.getElementById('testBtn');
-    const errorMsg = document.getElementById('errorMsg');
-    const infoBox = document.getElementById('infoBox');
 
-    // ==================== VARIABLES GLOBALES ====================
-    let recognition = null;
-    let isListening = false;
-    let currentAudio = null;
+    let recognition = null, isListening = false, currentAudio = null;
 
-    // ==================== LOG HELPER ====================
-    function log(emoji, message, data = null) {
-      const timestamp = new Date().toLocaleTimeString();
-      console.log(`${emoji} [${timestamp}] ${message}`, data || '');
+    function log(emoji, msg, data=null){ console.log(`${emoji} ${msg}`, data||''); }
+
+    function updateStatus(type, msg){
+      statusEl.className = `status ${type}`;
+      statusEl.innerHTML = msg;
     }
 
-    // ==================== INICIALIZAR RECONOCIMIENTO ====================
-    function initSpeechRecognition() {
-      log('🔧', 'Inicializando reconocimiento de voz...');
+    function showError(msg){
+      errorMsg.textContent = `❌ ${msg}`;
+      errorMsg.style.display = 'block';
+      setTimeout(()=>errorMsg.style.display='none', 6000);
+    }
 
-      // Verificar soporte
+    // Inicializar reconocimiento de voz
+    function initSpeechRecognition(){
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
-      if (!SpeechRecognition) {
-        showError('Tu navegador no soporta reconocimiento de voz. Usa Chrome, Edge o Safari.');
-        micBtn.classList.add('disabled');
-        return false;
-      }
-
+      if(!SpeechRecognition){ showError('Tu navegador no soporta reconocimiento de voz'); return false; }
       recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
       recognition.lang = 'es-ES';
-      recognition.maxAlternatives = 1;
+      recognition.interimResults = true;
 
-      // ==================== EVENTOS ====================
-      recognition.onstart = () => {
-        log('🎤', 'Reconocimiento iniciado');
+      recognition.onstart = ()=>{
         isListening = true;
         micBtn.classList.add('recording');
-        updateStatus('listening', '👂 Escuchando... Habla ahora');
-        hideError();
+        updateStatus('listening', '👂 Escuchando...');
       };
 
-      recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
-          }
+      recognition.onresult = (e)=>{
+        let finalText = '';
+        for(let i = e.resultIndex; i < e.results.length; i++){
+          const t = e.results[i][0].transcript;
+          if(e.results[i].isFinal) finalText += t;
+          else transcriptEl.textContent = t;
         }
-
-        // Mostrar transcripción en tiempo real
-        if (interimTranscript) {
-          transcriptEl.textContent = interimTranscript;
-          transcriptEl.classList.remove('empty');
-        }
-
-        // Cuando hay texto final, procesar
-        if (finalTranscript) {
-          log('📝', 'Transcripción final:', finalTranscript);
-          transcriptEl.textContent = finalTranscript;
-          transcriptEl.classList.remove('empty');
-          processWithElevenLabs(finalTranscript);
+        if(finalText){
+          transcriptEl.textContent = finalText;
+          processWithChatbot(finalText);
         }
       };
 
-      recognition.onerror = (event) => {
-        log('❌', 'Error en reconocimiento:', event.error);
-        
-        stopListening();
-
-        switch(event.error) {
-          case 'no-speech':
-            showError('No detecté voz. Intenta de nuevo y habla más fuerte.');
-            break;
-          case 'audio-capture':
-            showError('No se pudo acceder al micrófono. Verifica los permisos.');
-            infoBox.style.display = 'block';
-            break;
-          case 'not-allowed':
-            showError('Permiso de micrófono denegado. Actívalo en la configuración del navegador.');
-            infoBox.style.display = 'block';
-            break;
-          case 'aborted':
-            updateStatus('idle', 'Grabación cancelada');
-            break;
-          default:
-            showError(`Error: ${event.error}`);
-        }
+      recognition.onerror = e=>{
+        showError('Error: ' + e.error);
+        updateStatus('idle', 'Presiona el micrófono para hablar');
       };
-
-      recognition.onend = () => {
-        log('🛑', 'Reconocimiento finalizado');
-        stopListening();
-      };
-
-      log('✅', 'Reconocimiento de voz listo');
+      recognition.onend = ()=>{ micBtn.classList.remove('recording'); isListening = false; };
       return true;
     }
 
-    // ==================== CONTROL DE GRABACIÓN ====================
-    function startListening() {
-      if (!recognition) {
-        showError('El reconocimiento de voz no está disponible');
-        return;
-      }
-
-      if (isListening) {
-        log('⏹️', 'Deteniendo grabación...');
-        recognition.stop();
-        return;
-      }
-
-      log('▶️', 'Iniciando grabación...');
-      
-      try {
-        recognition.start();
-      } catch (error) {
-        log('❌', 'Error al iniciar:', error);
-        showError('Error al iniciar el micrófono. Recarga la página.');
-      }
+    function startListening(){
+      if(!recognition){ showError('Reconocimiento no disponible'); return; }
+      if(isListening){ recognition.stop(); return; }
+      recognition.start();
     }
 
-    function stopListening() {
-      isListening = false;
-      micBtn.classList.remove('recording');
-      
-      if (!currentAudio) {
-        updateStatus('idle', 'Presiona el micrófono para hablar');
-      }
-    }
+    // ==================== CHATBOT + ELEVEN LABS ====================
+    async function processWithChatbot(text){
+      if(!text.trim()) return;
+      updateStatus('processing', '🤖 Procesando con el chatbot...');
+      responseEl.textContent = 'Pensando...';
 
-    // ==================== ELEVEN LABS ====================
-    async function processWithElevenLabs(text) {
-      if (!text || !text.trim()) {
-        log('⚠️', 'Texto vacío, ignorando...');
-        return;
-      }
-
-      log('📤', 'Enviando a Eleven Labs:', text);
-      updateStatus('processing', '⚙️ Generando audio...');
-
-      try {
-        const response = await fetch(`${API_URL}/api/test/elevenlabs`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ text: text.trim() })
+      try{
+        const res = await fetch(`${API_URL}/api/chatbot`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text })
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
-        }
+        if(!res.ok) throw new Error(`Error ${res.status}`);
 
-        log('✅', 'Audio recibido de Eleven Labs');
+        const chatbotReply = decodeURIComponent(res.headers.get('X-Chatbot-Response') || '');
+        responseEl.textContent = chatbotReply || 'Respuesta recibida';
 
-        const audioBlob = await response.blob();
+        const audioBlob = await res.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
-        
-        // Detener audio previo
-        if (currentAudio) {
-          currentAudio.pause();
-          currentAudio.currentTime = 0;
-        }
 
+        if(currentAudio){ currentAudio.pause(); currentAudio.currentTime=0; }
         currentAudio = new Audio(audioUrl);
-
-        updateStatus('playing', '🔊 Reproduciendo audio...');
-
-        currentAudio.onended = () => {
-          log('✅', 'Reproducción finalizada');
-          updateStatus('idle', 'Presiona el micrófono para hablar');
-          URL.revokeObjectURL(audioUrl);
-          currentAudio = null;
-        };
-
-        currentAudio.onerror = (e) => {
-          log('❌', 'Error reproduciendo audio:', e);
-          showError('Error al reproducir el audio');
-          updateStatus('idle', 'Presiona el micrófono para hablar');
-          currentAudio = null;
-        };
-
+        updateStatus('playing', '🔊 Reproduciendo respuesta...');
+        currentAudio.onended = ()=>updateStatus('idle', 'Presiona el micrófono para hablar');
         await currentAudio.play();
-        log('🔊', 'Reproduciendo...');
-
-      } catch (error) {
-        log('❌', 'Error con Eleven Labs:', error);
-        showError(`Error: ${error.message}`);
-        updateStatus('idle', 'Presiona el micrófono para hablar');
+      }catch(err){
+        showError(err.message);
+        updateStatus('idle','Presiona el micrófono para hablar');
       }
     }
 
-    // ==================== TEST AUDIO ====================
-    async function testAudio() {
-      log('🧪', 'Probando conexión con Eleven Labs...');
-      await processWithElevenLabs('Hola, esta es una prueba del sistema de audio');
+    function clearAll(){
+      transcriptEl.textContent='Aquí aparecerá lo que digas...';
+      responseEl.textContent='Esperando tu mensaje...';
+      updateStatus('idle','Presiona el micrófono para comenzar');
+      if(currentAudio){currentAudio.pause(); currentAudio=null;}
     }
 
-    // ==================== UI HELPERS ====================
-    function updateStatus(type, message) {
-      statusEl.className = `status ${type}`;
-      statusEl.innerHTML = message;
-      log('📊', `Estado: ${type} - ${message}`);
-    }
+    micBtn.onclick = startListening;
+    clearBtn.onclick = clearAll;
+    testBtn.onclick = ()=>processWithChatbot('Hola, soy el asistente de voz, ¿cómo estás?');
 
-    function showError(message) {
-      errorMsg.textContent = `❌ ${message}`;
-      errorMsg.style.display = 'block';
-      log('❌', message);
-      
-      setTimeout(() => {
-        hideError();
-      }, 7000);
-    }
-
-    function hideError() {
-      errorMsg.style.display = 'none';
-      infoBox.style.display = 'none';
-    }
-
-    function clearAll() {
-      log('🗑️', 'Limpiando...');
-      transcriptEl.textContent = 'Aquí aparecerá lo que digas...';
-      transcriptEl.classList.add('empty');
-      hideError();
-      
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-      }
-      
-      if (isListening && recognition) {
-        recognition.stop();
-      }
-      
-      updateStatus('idle', 'Presiona el micrófono para hablar');
-    }
-
-    // ==================== EVENT LISTENERS ====================
-    micBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      log('👆', 'Click en botón de micrófono');
-      startListening();
-    });
-
-    clearBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      clearAll();
-    });
-
-    testBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      testAudio();
-    });
-
-    // Prevenir comportamientos por defecto
-    micBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startListening();
-    });
-
-    // ==================== INICIALIZACIÓN ====================
-    window.addEventListener('DOMContentLoaded', () => {
-      log('🚀', 'Aplicación iniciada');
-      
-      if (initSpeechRecognition()) {
-        log('✅', 'Sistema listo para usar');
-        updateStatus('idle', 'Presiona el micrófono para comenzar <span class="wave">👋</span>');
-      } else {
-        log('❌', 'Error al inicializar');
-      }
-    });
-
-    // Log de versión
-    log('ℹ️', 'Voice Repeater v2.0');
-    log('ℹ️', `API URL: ${API_URL}`);
+    window.onload = ()=>{
+      if(initSpeechRecognition()) updateStatus('idle','Presiona el micrófono para hablar 👋');
+    };
   </script>
 </body>
 </html>

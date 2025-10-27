@@ -10,6 +10,7 @@ const healthRoutes = require('./routes/health');
 const elevenLabsRoutes = require('./routes/elevenlabs');
 const heygenRoutes = require('./routes/heygen');
 const flowRoutes = require('./routes/flows');
+const chatbotRoutes = require('./routes/chatbot');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/', healthRoutes);
 app.use('/api/test', elevenLabsRoutes);
 app.use('/api/heygen', heygenRoutes);
 app.use('/api/test', flowRoutes);
+app.use('/api', chatbotRoutes);
 
 
 // Iniciar servidor
