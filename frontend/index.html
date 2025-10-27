@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎤 Chatbot de Voz Inteligente</title>
+  <script src="js/livekit-loader.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -31,6 +32,7 @@
       font-size: 32px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .subtitle {
@@ -108,6 +110,27 @@
       font-style: normal;
       color: #a5b4fc;
     }
+
+    .avatar-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 32px;
+      padding: 24px;
+      background: #0f172a;
+      border-radius: 16px;
+      border: 1px solid #334155;
+    }
+
+    .avatar-container h3 {
+      color: #94a3b8;
+      margin-bottom: 8px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
     .controls {
       display: flex;
       gap: 12px;
@@ -158,19 +181,28 @@
       <div id="response" class="response-text">Esperando tu mensaje...</div>
     </div>
 
+    <div class="avatar-container">
+      <h3>🤖 Avatar Interactivo</h3>
+      <video id="avatarVideo" autoplay muted playsinline style="width: 100%; max-width: 400px; border-radius: 16px; background: #0f172a;"></video>
+      <div id="avatarStatus" class="status idle" style="margin-top: 16px;">
+        Avatar desconectado
+      </div>
+    </div>
+
     <div class="controls">
       <button id="clearBtn" class="btn">🗑️ Limpiar</button>
       <button id="testBtn" class="btn">🧪 Test Chatbot</button>
+      <button id="disconnectAvatarBtn" class="btn">🤖 Desconectar Avatar</button>
     </div>
 
     <div id="errorMsg" class="error-msg"></div>
   </div>
 
+  <script src="js/livekit-loader.js"></script>
+
   <script>
     // ✅ Detecta automáticamente si estás en local o producción
-    const API_URL = window.location.hostname === 'localhost' 
-      ? 'http://localhost:3000'
-      : window.location.origin;
+    const API_URL = 'http://localhost:3000'
     
     const micBtn = document.getElementById('micBtn');
     const statusEl = document.getElementById('status');
@@ -179,14 +211,28 @@
     const errorMsg = document.getElementById('errorMsg');
     const clearBtn = document.getElementById('clearBtn');
     const testBtn = document.getElementById('testBtn');
+    const disconnectAvatarBtn = document.getElementById('disconnectAvatarBtn');
+    const avatarVideo = document.getElementById('avatarVideo');
+    let audioUnlocked = false;
+    const avatarStatusEl = document.getElementById('avatarStatus');
 
-    let recognition = null, isListening = false, currentAudio = null;
+    // ==================== VARIABLES GLOBALES ====================
+    let recognition = null;
+    let isListening = false;
+    let currentAudio = null;
+    let avatarSession = null;
+    let livekitRoom = null;
 
     function log(emoji, msg, data=null){ console.log(`${emoji} ${msg}`, data||''); }
 
     function updateStatus(type, msg){
       statusEl.className = `status ${type}`;
       statusEl.innerHTML = msg;
+    }
+
+    function updateAvatarStatus(type, msg){
+      avatarStatusEl.className = `status ${type}`;
+      avatarStatusEl.innerHTML = msg;
     }
 
     function showError(msg){
@@ -236,7 +282,229 @@
       recognition.start();
     }
 
-    // ==================== CHATBOT + ELEVEN LABS ====================
+    // ==================== CHATBOT + HEYGEN AVATAR ====================
+    async function initAvatarSession() {
+      if (avatarSession) {
+        log('ℹ️', 'Sesión de avatar ya existe');
+        return avatarSession;
+      }
+
+      log('🤖', 'Inicializando sesión de avatar...');
+      updateAvatarStatus('processing', '🤖 Conectando avatar...');
+
+      try {
+        const response = await fetch(`${API_URL}/api/heygen/session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ quality: 'medium' })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        avatarSession = data.data;
+
+        log('✅', 'Sesión de avatar creada:', avatarSession);
+
+        // Conectar a LiveKit
+        await connectToLiveKit(avatarSession.url, avatarSession.access_token);
+
+        updateAvatarStatus('idle', '🤖 Avatar conectado');
+        return avatarSession;
+
+      } catch (error) {
+        log('❌', 'Error inicializando avatar:', error);
+        showError(`Error con avatar: ${error.message}`);
+        updateAvatarStatus('idle', 'Avatar desconectado');
+        return null;
+      }
+    }
+
+    async function connectToLiveKit(url, token) {
+      log('🔗', 'Conectando a LiveKit...');
+
+      try {
+        // Detectar namespace de LiveKit expuesto por el UMD
+        const candidates = [
+          window.LivekitClient,
+          window.livekit,
+          window.LiveKit,
+          window.Livekit,
+        ].filter(Boolean);
+
+        let lk = candidates.find(c => typeof c.connect === 'function' || typeof c.Room !== 'undefined');
+
+        if (!lk) {
+          const lkKeys = Object.keys(window).filter(k => k.toLowerCase().includes('livekit') || k.toLowerCase().includes('lk'));
+          for (const key of lkKeys) {
+            const obj = window[key];
+            if (obj && (typeof obj.connect === 'function' || typeof obj.Room !== 'undefined')) {
+              lk = obj; break;
+            }
+          }
+        }
+
+        if (!lk) {
+          console.log('🔍 Debug LiveKit globals:', Object.keys(window).filter(k => k.toLowerCase().includes('livekit') || k.toLowerCase().includes('lk')));
+          throw new Error('LiveKit client no disponible. Espera a que se cargue.');
+        }
+
+        // Configurar opciones de conexión
+        const connectOptions = { autoSubscribe: true, adaptiveStream: true };
+
+        // Preferir API connect() del UMD, cae a new Room().connect
+        if (typeof lk.connect === 'function') {
+          livekitRoom = await lk.connect(url, token, connectOptions);
+        } else if (typeof lk.Room === 'function') {
+          livekitRoom = new lk.Room();
+          await livekitRoom.connect(url, token, connectOptions);
+        } else {
+          throw new Error('No se encontró método connect ni clase Room en LiveKit');
+        }
+
+        log('✅', 'Conectado a LiveKit');
+
+        // Manejar pistas de vídeo/audio
+        const attachVideo = (track) => {
+          if (!track) return;
+          if (typeof track.attach === 'function') {
+            track.attach(avatarVideo);
+            avatarVideo.style.display = 'block';
+            log('🎥', 'Vídeo del avatar asignado (attach)');
+          } else if (track.mediaStreamTrack) {
+            const mediaStream = new MediaStream([track.mediaStreamTrack]);
+            avatarVideo.srcObject = mediaStream;
+            avatarVideo.style.display = 'block';
+            log('🎥', 'Vídeo del avatar asignado (MediaStream)');
+          }
+        };
+
+        livekitRoom.on('trackSubscribed', (track, publication, participant) => {
+          log('📡', 'Nueva pista recibida:', track.kind);
+          if (track.kind === 'video') attachVideo(track);
+        });
+
+        livekitRoom.on('trackUnsubscribed', (track, publication, participant) => {
+          log('📡', 'Pista removida:', track.kind);
+          if (track.kind === 'video') {
+            avatarVideo.srcObject = null;
+            avatarVideo.style.display = 'none';
+          }
+        });
+
+        // Manejar desconexión
+        livekitRoom.on('disconnected', () => {
+          log('🔌', 'Desconectado de LiveKit');
+          avatarVideo.srcObject = null;
+          avatarVideo.style.display = 'none';
+        });
+
+        // Enlazar cualquier pista ya publicada antes de registrar eventos
+        try {
+          const participants = [livekitRoom.localParticipant, ...Array.from(livekitRoom.participants.values())];
+          for (const p of participants) {
+            for (const pub of p.trackPublications || []) {
+              const t = pub.track;
+              if (t && t.kind === 'video') attachVideo(t);
+            }
+            // Algunos builds exponen publications como Map
+            if (p.tracks && p.tracks.forEach) {
+              p.tracks.forEach((pub) => {
+                const t = pub.track;
+                if (t && t.kind === 'video') attachVideo(t);
+              });
+            }
+          }
+        } catch (e) {
+          log('ℹ️', 'No se pudieron inspeccionar pistas iniciales:', e);
+        }
+
+      } catch (error) {
+        log('❌', 'Error conectando a LiveKit:', error);
+        throw error;
+      }
+    }
+
+    async function sendTextToAvatar(text) {
+      if (!avatarSession) {
+        log('⚠️', 'No hay sesión de avatar activa');
+        return;
+      }
+
+      if (!text || !text.trim()) {
+        log('⚠️', 'Texto vacío, ignorando...');
+        return;
+      }
+
+      log('💬', 'Enviando texto al avatar:', text);
+
+      try {
+        const response = await fetch(`${API_URL}/api/heygen/speak`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sessionId: avatarSession.session_id,
+            text: text.trim()
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        log('✅', 'Texto enviado al avatar');
+
+      } catch (error) {
+        log('❌', 'Error enviando texto al avatar:', error);
+        showError(`Error con avatar: ${error.message}`);
+      }
+    }
+
+    async function stopAvatarSession() {
+      if (!avatarSession) {
+        log('ℹ️', 'No hay sesión de avatar para detener');
+        return;
+      }
+
+      log('🛑', 'Deteniendo sesión de avatar...');
+
+      try {
+        await fetch(`${API_URL}/api/heygen/stop`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sessionId: avatarSession.session_id
+          })
+        });
+
+        if (livekitRoom) {
+          await livekitRoom.disconnect();
+          livekitRoom = null;
+        }
+
+        avatarVideo.srcObject = null;
+        avatarVideo.style.display = 'none';
+        avatarSession = null;
+
+        updateAvatarStatus('idle', 'Avatar desconectado');
+        log('✅', 'Sesión de avatar detenida');
+
+      } catch (error) {
+        log('❌', 'Error deteniendo avatar:', error);
+      }
+    }
+
+    // ==================== CHATBOT + AVATAR INTEGRATION ====================
     async function processWithChatbot(text){
       if(!text.trim()) return;
       updateStatus('processing', '🤖 Procesando con el chatbot...');
@@ -253,6 +521,16 @@
 
         const chatbotReply = decodeURIComponent(res.headers.get('X-Chatbot-Response') || '');
         responseEl.textContent = chatbotReply || 'Respuesta recibida';
+
+        // Initialize avatar session if not already done
+        if (!avatarSession) {
+          await initAvatarSession();
+        }
+
+        // Send chatbot response to avatar
+        if (avatarSession && chatbotReply) {
+          await sendTextToAvatar(chatbotReply);
+        }
 
         const audioBlob = await res.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
@@ -278,9 +556,32 @@
     micBtn.onclick = startListening;
     clearBtn.onclick = clearAll;
     testBtn.onclick = ()=>processWithChatbot('Hola, soy el asistente de voz, ¿cómo estás?');
+    disconnectAvatarBtn.onclick = stopAvatarSession;
+
+    // Desbloquear audio/LiveKit tras primer gesto del usuario
+    micBtn.addEventListener('click', async () => {
+      if (audioUnlocked) return;
+      try {
+        // Asegura la sesión de avatar creada tras gesto
+        if (!avatarSession && typeof initAvatarSession === 'function') {
+          await initAvatarSession();
+        }
+        // Desbloquear el audio de LiveKit si está disponible
+        if (livekitRoom && typeof livekitRoom.startAudio === 'function') {
+          await livekitRoom.startAudio();
+        }
+        avatarVideo.muted = false;
+        audioUnlocked = true;
+        if (typeof log === 'function') log('🔓', 'Audio desbloqueado por gesto del usuario');
+      } catch (e) {
+        if (typeof log === 'function') log('❌', 'Error desbloqueando audio:', e);
+        console.error(e);
+      }
+    }, { once: true });
 
     window.onload = ()=>{
       if(initSpeechRecognition()) updateStatus('idle','Presiona el micrófono para hablar 👋');
+      // No iniciar sesión de avatar automáticamente para cumplir autoplay policy
     };
   </script>
 </body>

@@ -14,6 +14,7 @@ const ELEVEN_VOICE_ID = "YExhVa4bZONzeingloMX";
 // ¡AQUÍ ESTÁ LA CLAVE NUEVA!
 const HEYGEN_API_KEY = "k9K6pjuIAtm"; 
 const HEYGEN_AVATAR_ID = "Thaddeus_CasualLook_public";
+const HEYGEN_ELEVEN_VOICE_ID = 'e70a2982263f45fdbb06a1da8fd68002'
 // =================================================================
 
 // Configuración del servidor
@@ -25,6 +26,7 @@ console.log('ELEVEN_API_KEY:', ELEVEN_API_KEY ? `✅ Cargada (${ELEVEN_API_KEY.s
 console.log('ELEVEN_VOICE_ID:', ELEVEN_VOICE_ID ? `✅ Cargada (${ELEVEN_VOICE_ID})` : '❌ NO cargada');
 console.log('HEYGEN_API_KEY:', HEYGEN_API_KEY ? `✅ Cargada (${HEYGEN_API_KEY.substring(0, 20)}...)` : '❌ NO cargada');
 console.log('HEYGEN_AVATAR_ID:', HEYGEN_AVATAR_ID ? `✅ Cargada (${HEYGEN_AVATAR_ID.substring(0, 10)}...)` : '❌ NO cargada');
+console.log('HEYGEN_ELEVEN_VOICE_ID:', HEYGEN_ELEVEN_VOICE_ID ? `✅ Cargada (${HEYGEN_ELEVEN_VOICE_ID.substring(0, 10)}...)` : '❌ NO cargada');
 console.log('');
 
 module.exports = {
@@ -32,7 +34,8 @@ module.exports = {
   ELEVEN_API_KEY,
   ELEVEN_VOICE_ID,
   HEYGEN_API_KEY,
-  HEYGEN_AVATAR_ID, 
+  HEYGEN_AVATAR_ID,
+  HEYGEN_ELEVEN_VOICE_ID,
   
   heygenSessionData: {
     get: () => null,

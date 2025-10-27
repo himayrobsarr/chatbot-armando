@@ -32,11 +32,18 @@ class HeyGenService {
         console.log(`🎬 Creando sesión con avatar ${this.avatarId}...`);
         try {
             // 1️⃣ Crear sesión
-            const response = await this.client.post('/streaming.new', {
+            const sessionData = {
                 avatar_id: this.avatarId,
                 version: 'v2',
-                quality: options.quality || 'medium'
-            });
+                quality: options.quality || 'medium',
+                voice: {
+                    voice_id: options.voiceId || 'e70a2982263f45fdbb06a1da8fd68002',
+                    rate: 1.0,
+                    emotion: 'FRIENDLY'
+                }
+            };
+
+            const response = await this.client.post('/streaming.new', sessionData);
 
             const data = response.data.data;
             console.log('📡 Respuesta streaming.new:', data);

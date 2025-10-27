@@ -21,7 +21,8 @@ const allowedOrigins = [
   'http://127.0.0.1:8080',
   'http://127.0.0.1:5500',
   'http://localhost:3000',
-  'https://chatbot-armando.vercel.app'  // ← AGREGAR ESTO
+  'https://chatbot-armando.vercel.app',  // ← AGREGAR ESTO
+  'http://127.0.0.1:5500/frontend/index.html'
 ];
 
 app.use(cors({
@@ -72,10 +73,9 @@ if (process.env.NODE_ENV !== 'production') {
     console.log('📋 Endpoints disponibles:');
     console.log('   GET  /health');
     console.log('   POST /api/test/elevenlabs');
-    console.log('   POST /api/test/heygen/session');
-    console.log('   POST /api/test/heygen/start');
-    console.log('   POST /api/test/heygen/speak');
-    console.log('   POST /api/test/heygen/close');
+    console.log('   POST /api/heygen/session');
+    console.log('   POST /api/heygen/speak');
+    console.log('   POST /api/heygen/stop');
     console.log('   POST /api/test/full-flow');
     console.log('   POST /api/chatbot');
     console.log('\n');
