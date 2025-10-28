@@ -77,7 +77,7 @@ class AvatarManager {
                     'X-Api-Key': token
                 },
                 body: JSON.stringify({
-                    quality: 'low',
+                    quality: 'medium',
                     avatar_id: this.avatarId,
                     voice: {
                         voice_id: this.voiceId

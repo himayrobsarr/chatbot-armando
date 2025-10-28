@@ -35,7 +35,7 @@ class HeyGenService {
             const sessionData = {
                 avatar_id: this.avatarId,
                 version: 'v2',
-                quality: options.quality || 'low',
+                quality: options.quality || 'medium',
                 voice: {
                     voice_id: options.voiceId || 'e70a2982263f45fdbb06a1da8fd68002',
                     rate: 1.0,

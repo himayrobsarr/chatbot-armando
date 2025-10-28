@@ -45,7 +45,7 @@ class AvatarApp {
           body: JSON.stringify({
             avatar_id: this.AVATAR_ID,
             version: 'v2',
-            quality: 'low'
+            quality: 'medium'
           })
         });
   

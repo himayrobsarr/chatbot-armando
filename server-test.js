@@ -62,7 +62,7 @@ app.post('/test/heygen', async (req, res) => {
     const response = await axios.post(
       'https://api.heygen.com/v1/streaming.new',
       {
-        quality: 'low',
+        quality: 'medium',
         version: 'v2'
       },
       {
