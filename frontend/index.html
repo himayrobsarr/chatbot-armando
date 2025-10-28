@@ -337,7 +337,9 @@
     const clearBtn = document.getElementById('clearBtn');
     const testBtn = document.getElementById('testBtn');
 
-    const API_URL = 'http://localhost:3000';
+    // Detecta si estamos en localhost o en producción
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_URL = isLocalhost ? 'http://localhost:3000/' : 'https://chatbot-armando.vercel.app/';
 
     function updateStatus(type, msg) {
       statusEl.className = `status ${type}`;
