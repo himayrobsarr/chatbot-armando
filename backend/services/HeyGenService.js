@@ -6,8 +6,13 @@ const axios = require('axios');
  */
 class HeyGenService {
     constructor(apiKey, avatarId) {
+        console.log('🔧 HeyGenService constructor llamado con:', {
+            apiKey: apiKey ? `[${apiKey.length} chars]` : 'UNDEFINED',
+            avatarId: avatarId || 'UNDEFINED'
+        });
+
         if (!apiKey || !avatarId) {
-            throw new Error("HeyGenService: Se requieren apiKey y avatarId.");
+            throw new Error(`HeyGenService: Se requieren apiKey y avatarId. Recibido: apiKey=${!!apiKey}, avatarId=${!!avatarId}`);
         }
 
         this.apiKey = apiKey;
@@ -31,37 +36,41 @@ class HeyGenService {
     async createSession(options = {}) {
         console.log(`🎬 Creando sesión con avatar ${this.avatarId}...`);
         try {
-            // 1️⃣ Crear sesión
             const sessionData = {
                 avatar_id: this.avatarId,
                 version: 'v2',
                 quality: options.quality || 'medium',
                 voice: {
-                    voice_id: options.voiceId || 'e70a2982263f45fdbb06a1da8fd68002',
+                    voice_id: options.voiceId || '1bd001e7e50f421d891986aad5158bc8',
                     rate: 1.0,
                     emotion: 'FRIENDLY'
                 },
-                disable_idle_timeout: true, // Deshabilita el timeout de inactividad de 2 minutos
-                activity_idle_timeout: 600 // Extiende el timeout a 10 minutos (600 segundos)
+                disable_idle_timeout: true,
+                activity_idle_timeout: 3600 // 60 minutos
             };
 
             const response = await this.client.post('/streaming.new', sessionData);
-
             const data = response.data.data;
-            console.log('📡 Respuesta streaming.new:', data);
+            console.log("Esta es la informacion de /streaming.new", data);
 
-            if (!data || !data.session_id || !data.url || !data.access_token) {
+            if (!data?.session_id || !data?.url || !data?.access_token) {
                 throw new Error('La respuesta no contiene datos válidos de sesión.');
             }
 
-            // 2️⃣ Iniciar stream
-            console.log('🚀 Iniciando stream...');
-            await this.client.post('/streaming.start', {
-                session_id: data.session_id
-            });
+            console.log('✅ Sesión creada correctamente:', data.session_id);
+            await this.client.post('/streaming.start', { session_id: data.session_id });
 
-            console.log('✅ Stream iniciado correctamente');
-            return data;
+            // 🔹 Normalizar respuesta para compatibilidad con frontend
+            return {
+                session_id: data.session_id,
+                url: data.url,
+                access_token: data.access_token,
+                // Mantener estructura anidada para compatibilidad
+                video: {
+                    url: data.url,
+                    token: data.access_token
+                }
+            };
 
         } catch (error) {
             console.error('❌ Error en createSession:', error.response?.data || error.message);
@@ -84,6 +93,21 @@ class HeyGenService {
             return res.data;
         } catch (error) {
             console.error('❌ Error en sendText:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Mantiene viva la sesión reiniciando el contador de timeout
+     */
+    async keepAlive(sessionId) {
+        console.log(`💓 Manteniendo viva sesión ${sessionId}...`);
+        try {
+            const res = await this.client.post('/streaming.keep_alive', { session_id: sessionId });
+            console.log('✅ Keep-alive enviado exitosamente');
+            return res.data;
+        } catch (error) {
+            console.error('❌ Error en keep-alive:', error.response?.data || error.message);
             throw error;
         }
     }

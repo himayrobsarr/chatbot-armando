@@ -12,7 +12,7 @@ const ELEVEN_API_KEY = "679b4626ae90f5ba131773293827f69568861885ae5ce07fcbde0569
 const ELEVEN_VOICE_ID = "YExhVa4bZONzeingloMX";
 
 // ¡AQUÍ ESTÁ LA CLAVE NUEVA!
-const HEYGEN_API_KEY = "k9K6pjuIAtm"; 
+const HEYGEN_API_KEY = "sk_V2_hgu_kZEI9FtB1ee_ehoXWplHb3kjgrRsPY1LG2WA67sx5d2l"; 
 const HEYGEN_AVATAR_ID = "Thaddeus_CasualLook_public";
 const HEYGEN_ELEVEN_VOICE_ID = 'e70a2982263f45fdbb06a1da8fd68002'
 // =================================================================

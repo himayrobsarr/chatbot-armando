@@ -5,8 +5,8 @@
 // Variables de entorno (TEMPORAL - Solo para pruebas)
 const ELEVEN_API_KEY = '679b4626ae90f5ba131773293827f69568861885ae5ce07fcbde05698a284169';
 const ELEVEN_VOICE_ID = 'YExhVa4bZONzeingloMX';
-const HEYGEN_API_KEY = 'k9K6pjuIAtm';
-
+const HEYGEN_API_KEY = 'sk_V2_hgu_kZEI9FtB1ee_ehoXWplHb3kjgrRsPY1LG2WA67sx5d2l';
+const HEYGEN_ELEVEN_VOICE_ID = 'e70a2982263f45fdbb06a1da8fd68002';
 /**
  * Registra métricas de rendimiento
  * @param {string} endpoint - Nombre del endpoint
@@ -27,6 +27,7 @@ function validateKeys(config) {
   if (!config.ELEVEN_API_KEY) missing.push('ELEVEN_API_KEY');
   if (!config.ELEVEN_VOICE_ID) missing.push('ELEVEN_VOICE_ID');
   if (!config.HEYGEN_API_KEY) missing.push('HEYGEN_API_KEY');
+  if (!config.HEYGEN_ELEVEN_VOICE_ID) missing.push('HEYGEN_ELEVEN_VOICE_ID');
   return missing;
 }
 
@@ -50,6 +51,7 @@ module.exports = {
   validateKeys,
   handleApiError,
   // Variables de entorno temporales
+  HEYGEN_ELEVEN_VOICE_ID,
   ELEVEN_API_KEY,
   ELEVEN_VOICE_ID,
   HEYGEN_API_KEY

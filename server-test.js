@@ -11,7 +11,7 @@ const PORT = 3000;
 // KEYS HARDCODEADAS
 const ELEVEN_API_KEY = '679b4626ae90f5ba131773293827f69568861885ae5ce07fcbde05698a284169';
 const ELEVEN_VOICE_ID = 'YExhVa4bZONzeingloMX';
-const HEYGEN_API_KEY = 'sk_V2_hgu_k9K6pjuIAtm_Ajt8FSwhdZXEv8qjyY7OFamirOF19nLe';
+const HEYGEN_API_KEY = 'sk_V2_hgu_kZEI9FtB1ee_ehoXWplHb3kjgrRsPY1LG2WA67sx5d2l';
 
 console.log('\n��� Keys cargadas:');
 console.log('ELEVEN_API_KEY:', ELEVEN_API_KEY ? '✅ OK' : '❌ FALTA');
