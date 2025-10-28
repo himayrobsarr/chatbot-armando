@@ -47,12 +47,25 @@ router.post('/session', async (req, res) => {
 // Enviar texto al avatar
 router.post('/speak', async (req, res) => {
   try {
-    const { sessionId, text } = req.body;
+    const { sessionId, text, source } = req.body;
 
     if (!sessionId || !text) {
       return res.status(400).json({
         success: false,
         error: 'Se requieren sessionId y text'
+      });
+    }
+
+    // Gate: solo permitir que el avatar hable con texto proveniente del chatbot
+    if (source !== 'chatbot') {
+      console.warn('[HeyGenSpeak] Bloqueado intento de speak sin source=chatbot', {
+        hasSession: Boolean(sessionId),
+        textPreview: typeof text === 'string' ? text.slice(0, 80) : undefined,
+        source
+      });
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: solo el chatbot puede disparar el habla del avatar'
       });
     }
 
@@ -64,11 +77,13 @@ router.post('/speak', async (req, res) => {
     }
 
     console.log(`💬 Enviando texto al avatar: "${text}"`);
+    console.log(`[HeyGenSpeak] Enviando texto al avatar (session=${sessionId}): "${String(text).slice(0, 120)}"`);
     await heygenService.sendText(sessionId, text);
 
     res.json({
       success: true,
-      message: 'Texto enviado al avatar'
+      message: 'Texto enviado al avatar',
+      source
     });
   } catch (error) {
     console.error('❌ Error enviando texto:', error.response?.data || error.message);

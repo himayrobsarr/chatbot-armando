@@ -32,7 +32,8 @@ app.use(cors({
     } else {
       callback(new Error('Origen no permitido por CORS'));
     }
-  }
+  },
+  exposedHeaders: ['X-Chatbot-Response']
 }));
 
 // ==========================

@@ -467,7 +467,8 @@
           },
           body: JSON.stringify({
             sessionId: avatarSession.session_id,
-            text: text.trim()
+            text: text.trim(),
+            source: 'chatbot'
           })
         });
 
@@ -523,8 +524,10 @@
     // ==================== CHATBOT + AVATAR INTEGRATION ====================
     async function processWithChatbot(text){
       if(!text.trim()) return;
+      const startedAt = Date.now();
       updateStatus('processing', '🤖 Procesando con el chatbot...');
       responseEl.textContent = 'Pensando...';
+      if (typeof log === 'function') log('[UI]', '▶️ Inicia flujo chatbot→TTS→avatar', { textPreview: text.slice(0,80) });
 
       try{
         const res = await fetch(`${API_URL}/api/chatbot`, {
@@ -536,6 +539,7 @@
         if(!res.ok) throw new Error(`Error ${res.status}`);
 
         const chatbotReply = decodeURIComponent(res.headers.get('X-Chatbot-Response') || '');
+        if (typeof log === 'function') log('[UI]', '✅ Respuesta chatbot recibida', { len: chatbotReply.length });
         responseEl.textContent = chatbotReply || 'Respuesta recibida';
 
         // Initialize avatar session if not already done
@@ -544,8 +548,21 @@
         }
 
         // Send chatbot response to avatar
+        if (typeof log === 'function') {
+          log('[UI]', 'ℹ️ Estado previo a enviar al avatar', {
+            hasSession: !!avatarSession,
+            hasReply: !!chatbotReply,
+            sessionId: avatarSession?.session_id
+          });
+        }
         if (avatarSession && chatbotReply) {
           await sendTextToAvatar(chatbotReply);
+          if (typeof log === 'function') log('[UI]', '📤 Enviado texto al avatar');
+        } else {
+          if (typeof log === 'function') {
+            if (!avatarSession) log('[UI]', '⛔ No hay sesión de avatar activa');
+            if (!chatbotReply) log('[UI]', '⛔ Respuesta del chatbot vacía');
+          }
         }
 
         const audioBlob = await res.blob();
@@ -556,6 +573,8 @@
         updateStatus('playing', '🔊 Reproduciendo respuesta...');
         currentAudio.onended = ()=>updateStatus('idle', 'Presiona el micrófono para hablar');
         await currentAudio.play();
+        if (typeof log === 'function') log('[UI]', '🔊 Reproducción de audio iniciada');
+        if (typeof log === 'function') log('[UI]', '⏱️ Flujo completado', { totalMs: Date.now() - startedAt });
       }catch(err){
         showError(err.message);
         updateStatus('idle','Presiona el micrófono para hablar');
