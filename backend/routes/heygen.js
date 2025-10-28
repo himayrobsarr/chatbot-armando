@@ -25,7 +25,7 @@ router.post('/session', async (req, res) => {
 
     console.log('🎬 Creando sesión de avatar...');
     const sessionData = await heygenService.createSession({
-      quality: req.body.quality || 'medium',
+      quality: req.body.quality || 'low',
       voiceId: config.HEYGEN_ELEVEN_VOICE_ID
     });
 
