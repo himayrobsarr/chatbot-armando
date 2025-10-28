@@ -40,7 +40,9 @@ class HeyGenService {
                     voice_id: options.voiceId || 'e70a2982263f45fdbb06a1da8fd68002',
                     rate: 1.0,
                     emotion: 'FRIENDLY'
-                }
+                },
+                disable_idle_timeout: true, // Deshabilita el timeout de inactividad de 2 minutos
+                activity_idle_timeout: 600 // Extiende el timeout a 10 minutos (600 segundos)
             };
 
             const response = await this.client.post('/streaming.new', sessionData);

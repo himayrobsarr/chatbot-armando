@@ -56,16 +56,16 @@ router.post('/speak', async (req, res) => {
       });
     }
 
-    // Gate: solo permitir que el avatar hable con texto proveniente del chatbot
-    if (source !== 'chatbot') {
-      console.warn('[HeyGenSpeak] Bloqueado intento de speak sin source=chatbot', {
+    // Permitir tanto 'chatbot' como 'user' para testing directo
+    if (source !== 'chatbot' && source !== 'user') {
+      console.warn('[HeyGenSpeak] Bloqueado intento de speak sin source válido', {
         hasSession: Boolean(sessionId),
         textPreview: typeof text === 'string' ? text.slice(0, 80) : undefined,
         source
       });
       return res.status(403).json({
         success: false,
-        error: 'Forbidden: solo el chatbot puede disparar el habla del avatar'
+        error: 'Forbidden: source debe ser "chatbot" o "user"'
       });
     }
 

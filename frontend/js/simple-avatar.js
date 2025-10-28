@@ -47,58 +47,47 @@ class AvatarManager {
         console.log(`[Status] ${message}`);
     }
     
-    async startSession() {
+    async startSession(retryCount = 0) {
+        const maxRetries = 3;
         try {
-            this.updateStatus('Obteniendo token de acceso...');
+            this.updateStatus('Creando sesión con el avatar...');
             this.startBtn.disabled = true;
-            
-            // Paso 1: Obtener token de HeyGen
-            const tokenResponse = await fetch(`${this.BACKEND_URL}/api/heygen/token`, {
+
+            // Crear sesión usando el backend (que ahora incluye los ajustes de timeout)
+            const sessionResponse = await fetch(`${this.BACKEND_URL}/api/heygen/session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!tokenResponse.ok) {
-                throw new Error('Error al obtener el token');
-            }
-            
-            const { token } = await tokenResponse.json();
-            console.log('✅ Token obtenido correctamente');
-            
-            this.updateStatus('Creando sesión con el avatar...');
-            
-            // Paso 2: Crear sesión de streaming con HeyGen
-            const sessionResponse = await fetch('https://api.heygen.com/v1/streaming.new', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Api-Key': token
                 },
                 body: JSON.stringify({
-                    quality: 'medium',
-                    avatar_id: this.avatarId,
-                    voice: {
-                        voice_id: this.voiceId
-                    }
+                    quality: 'medium'
                 })
             });
-            
+
             if (!sessionResponse.ok) {
-                throw new Error('Error al crear la sesión');
+                const errorData = await sessionResponse.json();
+                throw new Error(errorData.error || 'Error al crear la sesión');
             }
-            
-            this.sessionInfo = await sessionResponse.json();
+
+            const responseData = await sessionResponse.json();
+            this.sessionInfo = responseData.data;
             console.log('✅ Sesión creada:', this.sessionInfo);
-            
+
             this.updateStatus('Conectando con el avatar...');
-            
-            // Paso 3: Conectar con WebRTC/LiveKit
+
+            // Conectar con WebRTC/LiveKit
             await this.connectToStream();
-            
+
         } catch (error) {
             console.error('❌ Error al iniciar sesión:', error);
+
+            if (retryCount < maxRetries) {
+                console.log(`🔄 Reintentando creación de sesión (${retryCount + 1}/${maxRetries})...`);
+                this.updateStatus(`Reintentando... (${retryCount + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
+                return this.startSession(retryCount + 1);
+            }
+
             this.updateStatus(`Error: ${error.message}`, true);
             this.startBtn.disabled = false;
         }
@@ -192,25 +181,32 @@ class AvatarManager {
     
     async speak() {
         const text = this.textInput.value.trim();
-        if (!text || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        if (!text || !this.sessionInfo?.session_id) {
             return;
         }
-        
+
         try {
-            // Enviar comando de hablar vía WebSocket
-            const command = {
-                type: 'speak',
-                text: text,
-                voice: {
-                    voice_id: this.voiceId
-                }
-            };
-            
-            this.ws.send(JSON.stringify(command));
-            console.log('📤 Comando enviado:', command);
-            
+            // Enviar texto usando el backend
+            const speakResponse = await fetch(`${this.BACKEND_URL}/api/heygen/speak`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sessionId: this.sessionInfo.session_id,
+                    text: text,
+                    source: 'user' // Cambiar a 'user' ya que es input directo del usuario
+                })
+            });
+
+            if (!speakResponse.ok) {
+                const errorData = await speakResponse.json();
+                throw new Error(errorData.error || 'Error al enviar texto');
+            }
+
+            console.log('📤 Texto enviado al avatar:', text);
             this.textInput.value = '';
-            
+
         } catch (error) {
             console.error('❌ Error al enviar comando:', error);
             this.updateStatus('Error al enviar texto', true);
@@ -220,37 +216,37 @@ class AvatarManager {
     async stopSession() {
         try {
             this.updateStatus('Cerrando sesión...');
-            
+
             // Cerrar WebSocket
             if (this.ws) {
                 this.ws.close();
                 this.ws = null;
             }
-            
+
             // Desconectar LiveKit
             if (this.room) {
                 await this.room.disconnect();
                 this.room = null;
             }
-            
-            // Enviar comando de cierre a HeyGen si tenemos session_id
-            if (this.sessionInfo?.data?.session_id) {
-                await fetch(`https://api.heygen.com/v1/streaming.stop`, {
+
+            // Enviar comando de cierre usando el backend
+            if (this.sessionInfo?.session_id) {
+                await fetch(`${this.BACKEND_URL}/api/heygen/stop`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        session_id: this.sessionInfo.data.session_id
+                        sessionId: this.sessionInfo.session_id
                     })
                 });
             }
-            
+
             this.sessionInfo = null;
             this.isConnected = false;
             this.updateStatus('Sesión cerrada');
             this.disableControls();
-            
+
         } catch (error) {
             console.error('❌ Error al cerrar sesión:', error);
         }

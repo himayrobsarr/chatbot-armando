@@ -224,6 +224,31 @@
     let currentAudio = null;
     let avatarSession = null;
     let livekitRoom = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 3;
+    let reconnectTimer = null;
+
+    function scheduleReconnect(reason = 'unknown'){
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        log('⚠️', `Reconexión cancelada (máx. intentos alcanzados). Última causa: ${reason}`);
+        updateAvatarStatus('idle', 'Avatar desconectado');
+        return;
+      }
+      const delay = Math.min(30000, 2000 * Math.pow(2, reconnectAttempts));
+      reconnectAttempts++;
+      clearTimeout(reconnectTimer);
+      log('🔁', `Programando reconexión en ${delay}ms (intento ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}). Causa: ${reason}`);
+      reconnectTimer = setTimeout(async () => {
+        try {
+          avatarSession = null; // fuerza nueva sesión
+          await initAvatarSession();
+          reconnectAttempts = 0;
+        } catch (e) {
+          log('❌', 'Error en reconexión:', e);
+          scheduleReconnect('reconnect-failed');
+        }
+      }, delay);
+    }
 
     function log(emoji, msg, data=null){ console.log(`${emoji} ${msg}`, data||''); }
 
@@ -384,6 +409,13 @@
             avatarVideo.style.display = 'block';
             log('🎥', 'Vídeo del avatar asignado (MediaStream)');
           }
+          try {
+            avatarVideo.autoplay = true;
+            avatarVideo.playsInline = true;
+            avatarVideo.muted = false;
+            const p = avatarVideo.play();
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+          } catch {}
         };
 
         livekitRoom.on('trackSubscribed', (track, publication, participant) => {
@@ -412,6 +444,7 @@
           log('🔌', 'Desconectado de LiveKit');
           avatarVideo.srcObject = null;
           avatarVideo.style.display = 'none';
+          scheduleReconnect('livekit-disconnected');
         });
 
         // Enlazar cualquier pista ya publicada antes de registrar eventos
