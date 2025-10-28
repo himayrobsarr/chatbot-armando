@@ -3,371 +3,470 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎤 Chatbot de Voz Inteligente</title>
+  <title>Asistente Virtual - Palmas del César</title>
   <script src="js/livekit-loader.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: #0f172a;
-      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8eef3 100%);
+      color: #2c3e50;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       padding: 20px;
     }
-    .container {
-      background: #1e293b;
-      border-radius: 24px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      padding: 48px;
-      max-width: 720px;
-      width: 100%;
-      border: 1px solid #334155;
-    }
-    h1 {
+    
+    /* Header con branding */
+    .header {
       text-align: center;
-      margin-bottom: 8px;
-      font-size: 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      padding: 32px 0 48px 0;
+      max-width: 900px;
+      margin: 0 auto;
     }
-    .subtitle {
-      text-align: center;
-      color: #94a3b8;
-      margin-bottom: 40px;
-      font-size: 16px;
-    }
-    .mic-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px;
-      margin: 40px 0;
-    }
-    .mic-button {
-      width: 140px; height: 140px;
-      border-radius: 50%;
-      border: 4px solid #667eea;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      font-size: 56px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-      display: flex; align-items: center; justify-content: center;
-      user-select: none;
-    }
-    .mic-button:hover { transform: scale(1.05); box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6); }
-    .mic-button.recording {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      border-color: #ef4444;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4); }
-      50% { transform: scale(1.08); box-shadow: 0 15px 60px rgba(239, 68, 68, 0.8); }
-    }
-    .status {
-      text-align: center;
-      padding: 16px 24px;
-      border-radius: 12px;
+    
+    .company-name {
+      font-size: 14px;
       font-weight: 600;
-      font-size: 18px;
-      min-width: 300px;
-      transition: all 0.3s ease;
-    }
-    .status.idle { background: #1e40af20; color: #60a5fa; border: 2px solid #1e40af40; }
-    .status.listening { background: #f59e0b20; color: #fbbf24; border: 2px solid #f59e0b40; }
-    .status.processing { background: #8b5cf620; color: #a78bfa; border: 2px solid #8b5cf640; }
-    .status.playing { background: #10b98120; color: #34d399; border: 2px solid #10b98140; }
-
-    .transcript-box, .response-box {
-      background: #0f172a;
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 32px;
-      border: 1px solid #334155;
-      min-height: 100px;
-    }
-    .transcript-box h3, .response-box h3 {
-      color: #94a3b8;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #1a4d8f;
       margin-bottom: 12px;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
+      opacity: 0.8;
     }
-    .transcript-text, .response-text {
-      color: #e2e8f0;
-      font-size: 18px;
-      line-height: 1.6;
-      font-style: italic;
-    }
-    .response-text {
-      font-style: normal;
-      color: #a5b4fc;
-    }
-
-    .avatar-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      margin-top: 32px;
-      padding: 24px;
-      background: #0f172a;
-      border-radius: 16px;
-      border: 1px solid #334155;
-    }
-
-    .avatar-container h3 {
-      color: #94a3b8;
+    
+    .main-title {
+      font-size: 32px;
+      font-weight: 600;
+      color: #1a4d8f;
       margin-bottom: 8px;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: -0.5px;
+    }
+    
+    .subtitle {
+      font-size: 16px;
+      color: #5a6c7d;
+      font-weight: 400;
     }
 
-    .controls {
+    /* Layout principal */
+    .main-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    /* Contenedor del avatar - PROTAGONISTA */
+    .avatar-section {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 48px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      border: 1px solid #e1e8ed;
+    }
+
+    #avatarVideo {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
+      background: #f5f7fa;
+      border: 2px solid #e1e8ed;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .avatar-controls {
+      margin-top: 32px;
       display: flex;
       gap: 12px;
       justify-content: center;
-      margin-top: 24px;
+      flex-wrap: wrap;
     }
+
+    /* Sección de interacción */
+    .interaction-section {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e1e8ed;
+    }
+
+    .mic-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .mic-button {
+      width: 80px;
+      height: 80px;
+      min-width: 80px;
+      border-radius: 50%;
+      border: 3px solid #1a4d8f;
+      background: #1a4d8f;
+      color: white;
+      font-size: 36px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(26, 77, 143, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .mic-button:hover { 
+      background: #164073;
+      border-color: #164073;
+      transform: scale(1.05);
+    }
+
+    .mic-button.recording {
+      background: #d32f2f;
+      border-color: #d32f2f;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3); }
+      50% { box-shadow: 0 4px 20px rgba(211, 47, 47, 0.5); }
+    }
+
+    .status-info {
+      flex: 1;
+    }
+
+    .status {
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 15px;
+      transition: all 0.2s ease;
+      border: 2px solid;
+      display: inline-block;
+    }
+
+    .status.idle { background: #e8f4f8; color: #1a4d8f; border-color: #b8d4e3; }
+    .status.listening { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+    .status.processing { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
+    .status.playing { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+
+    .content-box {
+      background: #fafbfc;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #e1e8ed;
+      min-height: 80px;
+    }
+
+    .content-box h3 {
+      color: #5a6c7d;
+      margin-bottom: 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .content-text {
+      color: #2c3e50;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .content-text.empty {
+      color: #95a5a6;
+      font-style: italic;
+    }
+
+    /* Controles */
     .btn {
       padding: 12px 24px;
-      border: 2px solid #334155;
-      border-radius: 10px;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s;
-      background: #1e293b;
-      color: #e2e8f0;
-      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.2s;
+      background: #ffffff;
+      color: #2c3e50;
+      font-size: 14px;
+      font-family: inherit;
     }
-    .btn:hover { background: #334155; border-color: #475569; transform: translateY(-2px); }
-    .error-msg {
-      background: #7f1d1d;
-      color: #fca5a5;
-      padding: 16px 20px;
-      border-radius: 12px;
-      margin-top: 20px;
+
+    .btn:hover:not(:disabled) { 
+      background: #f5f7fa; 
+      border-color: #1a4d8f;
+      color: #1a4d8f;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #1a4d8f;
+      color: white;
+      border-color: #1a4d8f;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #164073;
+      border-color: #164073;
+      color: white;
+    }
+
+    #textInput {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 6px;
+      border: 1px solid #d1d9e0;
+      background: #ffffff;
+      color: #2c3e50;
+      font-size: 15px;
+      font-family: inherit;
+      margin-top: 16px;
+    }
+
+    #textInput:focus {
+      outline: none;
+      border-color: #1a4d8f;
+      box-shadow: 0 0 0 3px rgba(26, 77, 143, 0.1);
+    }
+
+    .secondary-controls {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      padding-top: 24px;
+      border-top: 1px solid #e1e8ed;
+    }
+
+    /* Footer */
+    .footer {
       text-align: center;
-      border: 2px solid #991b1b;
-      display: none;
+      padding: 32px 0;
+      color: #5a6c7d;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🤖 Chatbot de Voz</h1>
-    <p class="subtitle">Habla y escucha respuestas generadas por IA</p>
+  <!-- Header -->
+  <div class="header">
+    <div class="company-name">Palmas del César</div>
+    <h1 class="main-title">Asistente Virtual Inteligente</h1>
+    <p class="subtitle">Interacción por voz impulsada por inteligencia artificial</p>
+  </div>
 
-    <div class="mic-container">
-      <button id="micBtn" class="mic-button" type="button">🎤</button>
-      <div id="status" class="status idle">Sistema listo - Presiona el micrófono para comenzar</div>
-    </div>
-
-    <div class="transcript-box">
-      <h3>🗣️ Tu voz (Transcripción)</h3>
-      <div id="transcript" class="transcript-text empty">Aquí aparecerá lo que digas...</div>
-    </div>
-
-    <div class="response-box">
-      <h3>💬 Respuesta del Chatbot</h3>
-      <div id="response" class="response-text">Esperando tu mensaje...</div>
-    </div>
-
-    <!-- Estado del Avatar -->
-    <div style="background: #0f172a; border-radius: 16px; padding: 24px; margin-top: 32px; border: 1px solid #334155;">
-      <h3 style="color: #94a3b8; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px;">📊 Estado del Sistema</h3>
-      <div id="status" class="status idle">Sistema listo - Presiona el micrófono para comenzar</div>
-    </div>
-
-    <div class="avatar-container">
-      <h3>🤖 Avatar Interactivo</h3>
-      <video id="avatarVideo" autoplay muted playsinline style="width: 100%; max-width: 400px; border-radius: 16px; background: #0f172a;"></video>
-      <div id="avatarStatus" class="status idle" style="margin-top: 16px;">
+  <!-- Contenido Principal -->
+  <div class="main-container">
+    
+    <!-- Avatar Section - PROTAGONISTA -->
+    <div class="avatar-section">
+      <video id="avatarVideo" autoplay muted playsinline></video>
+      
+      <div id="avatarStatus" class="status idle" style="margin-top: 24px;">
         Avatar desconectado
       </div>
 
-      <!-- Controles del Avatar -->
-      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
-        <button id="startBtn" class="btn">▶️ Iniciar Avatar</button>
-        <button id="stopBtn" class="btn" disabled>⏹️ Detener Avatar</button>
+      <div class="avatar-controls">
+        <button id="startBtn" class="btn btn-primary">▶️ Iniciar Avatar</button>
+        <button id="stopBtn" class="btn" disabled>⏹️ Detener</button>
       </div>
 
-      <!-- Input para texto -->
-      <div style="margin-top: 16px;">
-        <input type="text" id="textInput" placeholder="Escribe algo para que el avatar diga..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 16px;" disabled>
-        <button id="speakBtn" class="btn" style="margin-top: 8px; width: 100%;" disabled>💬 Hacer hablar al Avatar</button>
+      <input 
+        type="text" 
+        id="textInput" 
+        placeholder="Escriba un mensaje para el avatar..." 
+        disabled
+      >
+      <button id="speakBtn" class="btn" style="margin-top: 12px; width: 100%;" disabled>
+        💬 Enviar al Avatar
+      </button>
+    </div>
+
+    <!-- Sección de Interacción -->
+    <div class="interaction-section">
+      <div class="mic-row">
+        <button id="micBtn" class="mic-button" type="button">🎤</button>
+        <div class="status-info">
+          <div id="status" class="status idle">Presione el micrófono para hablar</div>
+        </div>
+      </div>
+
+      <div class="content-box">
+        <h3>Su mensaje</h3>
+        <div id="transcript" class="content-text empty">Presione el micrófono y comience a hablar...</div>
+      </div>
+
+      <div class="content-box">
+        <h3>Respuesta</h3>
+        <div id="response" class="content-text empty">Esperando instrucciones...</div>
+      </div>
+
+      <div class="secondary-controls">
+        <button id="clearBtn" class="btn">🗑️ Limpiar</button>
+        <button id="testBtn" class="btn">🧪 Probar Sistema</button>
       </div>
     </div>
 
-    <div class="controls">
-      <button id="clearBtn" class="btn">🗑️ Limpiar</button>
-      <button id="testBtn" class="btn">🧪 Test Chatbot</button>
-    </div>
+  </div>
 
-    <script>
-      // ================================================
-      // 🤖 Chatbot + Speech Integration
-      // ================================================
+  <!-- Footer -->
+  <div class="footer">
+    © 2025 Palmas del César - Todos los derechos reservados
+  </div>
 
-      // Variables globales
-      let isListening = false;
-      let currentAudio = null;
+  <script>
+    // ================================================
+    // Sistema de Asistente Virtual
+    // ================================================
 
-      // Elementos del DOM
-      const micBtn = document.getElementById('micBtn');
-      const statusEl = document.getElementById('status');
-      const transcriptEl = document.getElementById('transcript');
-      const responseEl = document.getElementById('response');
-      const clearBtn = document.getElementById('clearBtn');
-      const testBtn = document.getElementById('testBtn');
+    let isListening = false;
+    let currentAudio = null;
 
-      // API URL
-      const API_URL = 'http://localhost:3000';
+    const micBtn = document.getElementById('micBtn');
+    const statusEl = document.getElementById('status');
+    const transcriptEl = document.getElementById('transcript');
+    const responseEl = document.getElementById('response');
+    const clearBtn = document.getElementById('clearBtn');
+    const testBtn = document.getElementById('testBtn');
 
-      // Función para actualizar estado
-      function updateStatus(type, msg) {
-        statusEl.className = `status ${type}`;
-        statusEl.innerHTML = msg;
-        console.log(`[UI] ${msg}`);
+    const API_URL = 'http://localhost:3000';
+
+    function updateStatus(type, msg) {
+      statusEl.className = `status ${type}`;
+      statusEl.textContent = msg;
+      console.log(`[UI] ${msg}`);
+    }
+
+    function showError(msg) {
+      updateStatus('idle', `❌ Error: ${msg}`);
+      setTimeout(() => updateStatus('idle', 'Presione el micrófono para hablar'), 5000);
+    }
+
+    function initSpeechRecognition() {
+      if (!SpeechManager.isAvailable()) {
+        showError('Su navegador no soporta reconocimiento de voz');
+        return false;
       }
 
-      // Función para mostrar errores
-      function showError(msg) {
-        updateStatus('idle', `❌ Error: ${msg}`);
-        setTimeout(() => updateStatus('idle', 'Presiona el micrófono para hablar'), 5000);
-      }
+      SpeechManager.init();
 
-      // Inicializar Speech Recognition
-      function initSpeechRecognition() {
-        if (!SpeechManager.isAvailable()) {
-          showError('Tu navegador no soporta reconocimiento de voz');
-          return false;
+      SpeechManager.onStart = () => {
+        isListening = true;
+        micBtn.classList.add('recording');
+        updateStatus('listening', '🎙️ Escuchando...');
+      };
+
+      SpeechManager.onResult = (text) => {
+        transcriptEl.textContent = text;
+        transcriptEl.classList.remove('empty');
+        processWithChatbot(text);
+      };
+
+      SpeechManager.onError = (error) => {
+        showError('Error de reconocimiento: ' + error);
+        micBtn.classList.remove('recording');
+        isListening = false;
+      };
+
+      SpeechManager.onEnd = () => {
+        micBtn.classList.remove('recording');
+        isListening = false;
+      };
+
+      return true;
+    }
+
+    async function processWithChatbot(text) {
+      if (!text.trim()) return;
+
+      const startedAt = Date.now();
+      updateStatus('processing', '⚙️ Procesando...');
+      responseEl.textContent = 'Procesando su solicitud...';
+      responseEl.classList.remove('empty');
+
+      try {
+        const res = await fetch(`${API_URL}/api/chatbot`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+
+        const chatbotReply = decodeURIComponent(res.headers.get('X-Chatbot-Response') || '');
+        responseEl.textContent = chatbotReply || 'Respuesta recibida';
+
+        if (window.avatarManager && !window.avatarManager.sessionInfo) {
+          console.log('[UI] Inicializando sesión de avatar...');
+          await window.avatarManager.startSession();
         }
 
-        SpeechManager.init();
-
-        SpeechManager.onStart = () => {
-          isListening = true;
-          micBtn.classList.add('recording');
-          updateStatus('listening', '👂 Escuchando...');
-        };
-
-        SpeechManager.onResult = (text) => {
-          transcriptEl.textContent = text;
-          processWithChatbot(text);
-        };
-
-        SpeechManager.onError = (error) => {
-          showError('Error de reconocimiento: ' + error);
-          micBtn.classList.remove('recording');
-          isListening = false;
-        };
-
-        SpeechManager.onEnd = () => {
-          micBtn.classList.remove('recording');
-          isListening = false;
-        };
-
-        return true;
-      }
-
-      // Procesar texto con el chatbot
-      async function processWithChatbot(text) {
-        if (!text.trim()) return;
-
-        const startedAt = Date.now();
-        updateStatus('processing', '🤖 Procesando con el chatbot...');
-        responseEl.textContent = 'Pensando...';
-
-        try {
-          const res = await fetch(`${API_URL}/api/chatbot`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
-          });
-
-          if (!res.ok) throw new Error(`Error ${res.status}`);
-
-          const chatbotReply = decodeURIComponent(res.headers.get('X-Chatbot-Response') || '');
-          responseEl.textContent = chatbotReply || 'Respuesta recibida';
-
-          // Initialize avatar session if not already done
-          if (window.avatarManager && !window.avatarManager.sessionInfo) {
-            console.log('[UI] Inicializando sesión de avatar...');
-            await window.avatarManager.startSession();
-          }
-
-          // Send chatbot response to avatar
-          if (window.avatarManager && window.avatarManager.sessionInfo && chatbotReply) {
-            console.log('[UI] Enviando respuesta al avatar...');
-            await window.avatarManager.sendTextToAvatar(chatbotReply);
-          }
-
-          const audioBlob = await res.blob();
-          const audioUrl = URL.createObjectURL(audioBlob);
-
-          if (currentAudio) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-          }
-          currentAudio = new Audio(audioUrl);
-          updateStatus('playing', '🔊 Reproduciendo respuesta...');
-          currentAudio.onended = () => updateStatus('idle', 'Presiona el micrófono para hablar');
-          await currentAudio.play();
-
-          console.log(`[UI] Flujo completado en ${Date.now() - startedAt}ms`);
-
-        } catch (err) {
-          showError(err.message);
-          updateStatus('idle', 'Presiona el micrófono para hablar');
+        if (window.avatarManager && window.avatarManager.sessionInfo && chatbotReply) {
+          console.log('[UI] Enviando respuesta al avatar...');
+          await window.avatarManager.sendTextToAvatar(chatbotReply);
         }
-      }
 
-      // Función para limpiar
-      function clearAll() {
-        transcriptEl.textContent = 'Aquí aparecerá lo que digas...';
-        responseEl.textContent = 'Esperando tu mensaje...';
-        updateStatus('idle', 'Presiona el micrófono para hablar');
+        const audioBlob = await res.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+
         if (currentAudio) {
           currentAudio.pause();
-          currentAudio = null;
+          currentAudio.currentTime = 0;
         }
+        currentAudio = new Audio(audioUrl);
+        updateStatus('playing', '🔊 Reproduciendo...');
+        currentAudio.onended = () => updateStatus('idle', 'Presione el micrófono para hablar');
+        await currentAudio.play();
+
+        console.log(`[UI] Completado en ${Date.now() - startedAt}ms`);
+
+      } catch (err) {
+        showError(err.message);
+        updateStatus('idle', 'Presione el micrófono para hablar');
+      }
+    }
+
+    function clearAll() {
+      transcriptEl.textContent = 'Presione el micrófono y comience a hablar...';
+      transcriptEl.classList.add('empty');
+      responseEl.textContent = 'Esperando instrucciones...';
+      responseEl.classList.add('empty');
+      updateStatus('idle', 'Presione el micrófono para hablar');
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+    }
+
+    micBtn.onclick = () => {
+      if (!SpeechManager.recognition) {
+        if (!initSpeechRecognition()) return;
       }
 
-      // Event listeners
-      micBtn.onclick = () => {
-        if (!SpeechManager.recognition) {
-          if (!initSpeechRecognition()) return;
-        }
+      if (isListening) {
+        SpeechManager.stop();
+      } else {
+        SpeechManager.start();
+      }
+    };
 
-        if (isListening) {
-          SpeechManager.stop();
-        } else {
-          SpeechManager.start();
-        }
-      };
+    clearBtn.onclick = clearAll;
+    testBtn.onclick = () => processWithChatbot('Hola, soy el asistente virtual de Palmas del César');
 
-      clearBtn.onclick = clearAll;
-      testBtn.onclick = () => processWithChatbot('Hola, soy el asistente de voz, ¿cómo estás?');
-
-      // Inicialización
-      window.onload = () => {
-        if (initSpeechRecognition()) {
-          updateStatus('idle', 'Presiona el micrófono para hablar 👋');
-        }
-      };
-    </script>
-
-    <div id="errorMsg" class="error-msg"></div>
-  </div>
+    window.onload = () => {
+      if (initSpeechRecognition()) {
+        updateStatus('idle', 'Sistema listo');
+      }
+    };
+  </script>
 
   <script src="js/livekit-loader.js"></script>
   <script src="js/audio.js"></script>
